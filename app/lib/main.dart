@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/login_page.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const AgendaFacilApp());
@@ -13,11 +14,7 @@ class AgendaFacilApp extends StatelessWidget {
     return MaterialApp(
       title: 'AgendaFácil',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: const Color(0xFF6FCF3B),
-        fontFamily: 'Roboto',
-        scaffoldBackgroundColor: Colors.white,
-      ),
+      theme: AppTheme.lightTheme,
       home: const LoginScreen(),
     );
   }
