@@ -1,25 +1,27 @@
-import 'dart:convert'; // Converte respostas JSON
+import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart'; // Guarda o token
+import 'package:shared_preferences/shared_preferences.dart';
 
-
-// Serviço responsável pelas chamadas para a API
 class ApiService {
-  static const String baseUrl = 'http://127.0.0.1:8000';
+  // URL pública do backend
+  static const String baseUrl =
+      'https://agenda-pulcro-api.onrender.com';
 
-
-  // Testa a conexão com o backend
+  // Testa a conexão com a API
   static Future<String> testarConexao() async {
     final response = await http.get(
       Uri.parse('$baseUrl/'),
     );
 
+    if (response.statusCode != 200) {
+      throw Exception('API indisponível');
+    }
+
     return response.body;
   }
 
-
-  // Envia um novo cadastro para o backend
+  // Cria um cadastro provisório
   static Future<String> cadastrar({
     required String nome,
     required String email,
@@ -39,11 +41,12 @@ class ApiService {
       }),
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       final data = jsonDecode(response.body);
 
       throw Exception(
-        data['detail'] ?? 'Não foi possível realizar o cadastro',
+        data['detail'] ??
+            'Não foi possível realizar o cadastro',
       );
     }
 
@@ -51,7 +54,6 @@ class ApiService {
 
     return data['mensagem'];
   }
-
 
   // Faz login e salva o token
   static Future<String> login({
@@ -74,14 +76,18 @@ class ApiService {
     }
 
     final data = jsonDecode(response.body);
+
     final token = data['access_token'];
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('access_token', token);
+
+    await prefs.setString(
+      'access_token',
+      token,
+    );
 
     return token;
   }
-
 
   // Recupera o token salvo
   static Future<String?> getToken() async {
@@ -90,8 +96,7 @@ class ApiService {
     return prefs.getString('access_token');
   }
 
-
-  // Busca os dados do usuário autenticado
+  // Busca os dados do usuário logado
   static Future<String> getMe() async {
     final token = await getToken();
 
@@ -107,21 +112,24 @@ class ApiService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Não foi possível buscar o usuário');
+      throw Exception(
+        'Não foi possível buscar o usuário',
+      );
     }
 
     return response.body;
   }
 
-
-  // Busca os serviços cadastrados no banco
+  // Busca os serviços cadastrados
   static Future<List<dynamic>> getServicos() async {
     final response = await http.get(
       Uri.parse('$baseUrl/servicos/'),
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Não foi possível buscar os serviços');
+      throw Exception(
+        'Não foi possível buscar os serviços',
+      );
     }
 
     return jsonDecode(response.body);
