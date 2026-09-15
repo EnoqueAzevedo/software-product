@@ -20,7 +20,10 @@ router = APIRouter(
 )
 
 
-# Inicia um novo cadastro provisório
+# ============================================================
+# INICIA UM NOVO CADASTRO PROVISÓRIO
+# ============================================================
+
 @router.post(
     "/register",
     response_model=CadastroProvisorioResponse,
@@ -40,9 +43,9 @@ async def register(
             detail=erro,
         )
 
-    # Monta o link de confirmação enviado por e-mail
+    # Link público do backend no Render
     link_confirmacao = (
-        "http://127.0.0.1:8000/auth/confirm/"
+        "https://agenda-pulcro-api.onrender.com/auth/confirm/"
         f"{cadastro.token_confirmacao}"
     )
 
@@ -69,7 +72,10 @@ async def register(
     )
 
 
-# Confirma o cadastro quando o usuário acessa o link do e-mail
+# ============================================================
+# CONFIRMA O CADASTRO PELO LINK ENVIADO POR E-MAIL
+# ============================================================
+
 @router.get(
     "/confirm/{token}",
     response_class=HTMLResponse,
@@ -86,40 +92,48 @@ async def confirm(
     if erro:
         return HTMLResponse(
             content=f"""
-            <!DOCTYPE html>
-            <html lang="pt-BR">
-            <head>
-                <meta charset="UTF-8">
-                <title>Agenda Pulcro - Confirmação</title>
-            </head>
-            <body>
-                <h1>Não foi possível confirmar</h1>
-                <p>{erro}</p>
-            </body>
-            </html>
-            """,
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Pulcro - Confirmação</title>
+</head>
+
+<body>
+    <h1>Não foi possível confirmar</h1>
+
+    <p>{erro}</p>
+</body>
+</html>
+""",
             status_code=400,
         )
 
     return HTMLResponse(
         content="""
-        <!DOCTYPE html>
-        <html lang="pt-BR">
-        <head>
-            <meta charset="UTF-8">
-            <title>Agenda Pulcro - Conta confirmada</title>
-        </head>
-        <body>
-            <h1>Conta confirmada com sucesso!</h1>
-            <p>
-                Seu e-mail foi confirmado e sua conta no
-                Agenda Pulcro está ativa.
-            </p>
-            <p>
-                Agora você pode voltar para o aplicativo e fazer login.
-            </p>
-        </body>
-        </html>
-        """,
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Pulcro - Conta confirmada</title>
+</head>
+
+<body>
+    <h1>Conta confirmada com sucesso!</h1>
+
+    <p>
+        Seu e-mail foi confirmado e sua conta no
+        Agenda Pulcro está ativa.
+    </p>
+
+    <p>
+        Agora você pode voltar para o aplicativo
+        e fazer login.
+    </p>
+</body>
+</html>
+""",
         status_code=200,
     )
