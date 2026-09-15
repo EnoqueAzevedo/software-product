@@ -1,218 +1,124 @@
 import 'package:flutter/material.dart';
 
-/// Identidade visual do AgendaFácil.
-/// Contém apenas as definições de cores, tipografia e estilos de componentes.
+/// Paleta de cores extraída do design "Studio Essenza".
 class AppColors {
   AppColors._();
 
-  // Verde principal da marca (botões, ícone, destaques)
-  static const Color primary = Color(0xFF4CAF50);
-  static const Color primaryDark = Color(0xFF388E3C);
-  static const Color primaryLight = Color(0xFFA5D6A7);
-
-  // Cor de apoio usada em links ("Alterar a senha")
-  static const Color secondary = Color(0xFF43A047);
-
-  // Fundo e superfícies
-  static const Color background = Color(0xFFFFFFFF);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color inputFill = Color(0xFFF2F2F2);
-
-  // Textos
-  static const Color textPrimary = Color(0xFF1A1A1A);
-  static const Color textSecondary = Color(0xFF6E6E6E);
-  static const Color textHint = Color(0xFF9E9E9E);
-
-  // Bordas e divisores
-  static const Color border = Color(0xFFE0E0E0);
-
-  // Estados
-  static const Color error = Color(0xFFD32F2F);
-  static const Color success = primary;
+  static const Color background = Color(0xFFFBF3EC);
+  static const Color heroBackground = Color(0xFF2E2420);
+  static const Color heroBackgroundLight = Color(0xFF3E322C);
+  static const Color cardBackground = Color(0xFFFFFFFF);
+  static const Color beigeCard = Color(0xFFF2E4D8);
+  static const Color pillBackground = Color(0xFFEFDFD0);
+  static const Color accent = Color(0xFFA85C42);
+  static const Color accentDark = Color(0xFF8C4A34);
+  static const Color textPrimary = Color(0xFF2E2420);
+  static const Color textSecondary = Color(0xFF8A7A70);
+  static const Color textOnDark = Color(0xFFF5EDE6);
+  static const Color textOnDarkMuted = Color(0xFFD8C9BE);
+  static const Color divider = Color(0xFFEBDFD1);
 }
 
-class AppTextStyles {
-  AppTextStyles._();
-
-  static const String fontFamily = 'Roboto';
-
-  static const TextStyle appTitle = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 26,
-    fontWeight: FontWeight.bold,
-    color: AppColors.textPrimary,
-  );
-
-  static const TextStyle appSubtitle = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 14,
-    fontWeight: FontWeight.normal,
-    color: AppColors.textSecondary,
-  );
-
-  static const TextStyle heading = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 22,
-    fontWeight: FontWeight.bold,
-    color: AppColors.textPrimary,
-  );
-
-  static const TextStyle body = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 15,
-    fontWeight: FontWeight.normal,
-    color: AppColors.textSecondary,
-  );
-
-  static const TextStyle inputLabel = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-    color: AppColors.textPrimary,
-  );
-
-  static const TextStyle inputHint = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 14,
-    fontWeight: FontWeight.normal,
-    color: AppColors.textHint,
-  );
-
-  static const TextStyle buttonText = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 16,
-    fontWeight: FontWeight.bold,
-    color: Colors.white,
-  );
-
-  static const TextStyle link = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-    color: AppColors.secondary,
-  );
-}
-
+/// Raios de borda padronizados usados nos cards e botões.
 class AppRadius {
   AppRadius._();
 
-  static const double small = 8.0;
-  static const double medium = 16.0;
-  static const double large = 24.0;
-  static const double pill = 30.0; // usado no botão "Entrar" e nos campos
+  static const double large = 28;
+  static const double medium = 20;
+  static const double small = 14;
+  static const double pill = 100;
 }
 
+/// Espaçamentos padronizados.
 class AppSpacing {
   AppSpacing._();
 
-  static const double xs = 4.0;
-  static const double sm = 8.0;
-  static const double md = 16.0;
-  static const double lg = 24.0;
-  static const double xl = 32.0;
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 16;
+  static const double lg = 24;
+  static const double xl = 32;
 }
 
 class AppTheme {
   AppTheme._();
 
   static ThemeData get lightTheme {
-    return ThemeData(
-      useMaterial3: true,
+    final base = ThemeData.light(useMaterial3: true);
+
+    return base.copyWith(
       scaffoldBackgroundColor: AppColors.background,
-      fontFamily: AppTextStyles.fontFamily,
-
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        primary: AppColors.primary,
-        secondary: AppColors.secondary,
-        error: AppColors.error,
-        surface: AppColors.surface,
-        brightness: Brightness.light,
+      colorScheme: base.colorScheme.copyWith(
+        primary: AppColors.accent,
+        secondary: AppColors.accentDark,
+        surface: AppColors.cardBackground,
+        background: AppColors.background,
       ),
-
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: false,
       ),
-
-      // Estilo dos campos de texto (E-mail, Senha)
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.inputFill,
-        hintStyle: AppTextStyles.inputHint,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.md,
+      textTheme: base.textTheme.copyWith(
+        headlineMedium: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textOnDark,
+          height: 1.25,
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          borderSide: BorderSide.none,
+        titleLarge: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          borderSide: BorderSide.none,
+        titleMedium: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        bodyLarge: const TextStyle(
+          fontSize: 15,
+          color: AppColors.textPrimary,
         ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+        bodyMedium: const TextStyle(
+          fontSize: 13.5,
+          color: AppColors.textSecondary,
+        ),
+        labelLarge: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AppColors.accentDark,
         ),
       ),
-
-      // Botão principal ("Entrar")
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(56),
+          backgroundColor: AppColors.pillBackground,
+          foregroundColor: AppColors.textPrimary,
+          elevation: 0,
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
-          textStyle: AppTextStyles.buttonText,
-          elevation: 2,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         ),
       ),
-
-      // Botões de texto/link ("Esqueceu a senha", "Alterar a senha")
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.secondary,
-          textStyle: AppTextStyles.link,
-        ),
-      ),
-
-      // Switch ("Manter-se conectado")
-      switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith(
-          (states) => Colors.white,
-        ),
-        trackColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? AppColors.primary
-              : AppColors.border,
-        ),
-      ),
-
-      cardTheme: CardThemeData(
-        color: AppColors.surface,
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.large),
-        ),
-      ),
-
-      textTheme: const TextTheme(
-        titleLarge: AppTextStyles.appTitle,
-        titleMedium: AppTextStyles.heading,
-        bodyLarge: AppTextStyles.body,
-        bodyMedium: AppTextStyles.body,
-        labelLarge: AppTextStyles.buttonText,
+      dividerTheme: const DividerThemeData(
+        color: AppColors.divider,
+        thickness: 1,
+        space: 1,
       ),
     );
   }
+}
+
+/// Extensão para facilitar o uso da fonte Cormorant Garamond em qualquer texto
+extension CustomTextTheme on TextTheme {
+  TextStyle get cormorantTitle => const TextStyle(
+        fontFamily: 'CormorantGaramond',
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textOnDark,
+      );
 }

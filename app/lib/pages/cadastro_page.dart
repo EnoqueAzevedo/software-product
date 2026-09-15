@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart'; // Ajuste o caminho se o seu main.dart estiver em outra pasta
 
+import 'login_page.dart';
+import '../services/api_service.dart';
+import '../theme/app_theme.dart';
+
+// Tela de cadastro
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
 
@@ -10,25 +14,24 @@ class CadastroPage extends StatefulWidget {
 
 class _CadastroPageState extends State<CadastroPage> {
   final _nomeController = TextEditingController();
-  final _emailTelefoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
 
+  bool _senhaVisivel = false;
+  bool _botaoHabilitado = false;
+  bool _carregando = false;
+
+  // Valida o formato do e-mail
   bool _validarEmail(String email) {
     final regex = RegExp(
       r'^[\w\.-]+@[\w\.-]+\.\w+$',
     );
+
     return regex.hasMatch(email);
   }
-  bool _validarTelefone(String telefone) {
-    // Remove espaços, parênteses, hífens etc.
-    final numeros = telefone.replaceAll(RegExp(r'\D'), '');
-    // Considerando telefone brasileiro:
-    // 10 números = telefone fixo
-    // 11 números = celular
-    return numeros.length == 10 || numeros.length == 11;
-  }
 
+  // Verifica se existem três números consecutivos
   bool _temTresNumerosConsecutivos(String senha) {
     for (int i = 0; i < senha.length - 2; i++) {
       final a = senha.codeUnitAt(i);
@@ -43,94 +46,150 @@ class _CadastroPageState extends State<CadastroPage> {
         return true;
       }
     }
+
     return false;
   }
-
-
-  bool _senhaVisivel = false;
-  bool _botaoHabilitado = false;
-
-  static const Color corPrincipal = Color(0xFF7CC144);
 
   @override
   void initState() {
     super.initState();
+
     _nomeController.addListener(_validarCampos);
-    _emailTelefoneController.addListener(_validarCampos);
+    _emailController.addListener(_validarCampos);
     _senhaController.addListener(_validarCampos);
     _confirmarSenhaController.addListener(_validarCampos);
   }
-  
+
+  // Verifica se todos os campos estão válidos
   void _validarCampos() {
     final nome = _nomeController.text.trim();
-    final contato = _emailTelefoneController.text.trim();
+    final email = _emailController.text.trim();
     final senha = _senhaController.text;
     final confirmarSenha = _confirmarSenhaController.text;
 
-    // Nome: mínimo de 3 caracteres
     final nomeValido = nome.length >= 3;
 
-    // E-mail ou telefone válido
-    final contatoValido = _validarEmail(contato) || _validarTelefone(contato);
+    final emailValido = _validarEmail(email);
 
-    // Senha: mínimo de 6 caracteres
     final senhaValida = senha.length >= 6 &&
         !_temTresNumerosConsecutivos(senha);
 
-    // Confirmação da senha
     final senhasIguais =
         confirmarSenha.isNotEmpty && senha == confirmarSenha;
 
     final formularioValido =
         nomeValido &&
-        contatoValido &&
+        emailValido &&
         senhaValida &&
         senhasIguais;
 
     if (formularioValido != _botaoHabilitado) {
       setState(() {
         _botaoHabilitado = formularioValido;
-    });
+      });
+    }
   }
-}
 
-  void _criarConta() {
+  // Envia o cadastro para o backend
+  Future<void> _criarConta() async {
     if (_senhaController.text != _confirmarSenhaController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('As senhas não coincidem.')),
+        const SnackBar(
+          content: Text('As senhas não coincidem.'),
+        ),
       );
+
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Conta criada com sucesso!')),
-    );
+
+    setState(() {
+      _carregando = true;
+    });
+
+    try {
+      final mensagem = await ApiService.cadastrar(
+        nome: _nomeController.text.trim(),
+        email: _emailController.text.trim(),
+        senha: _senhaController.text,
+        confirmacaoSenha: _confirmarSenhaController.text,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(mensagem),
+        ),
+      );
+
+      await Future.delayed(
+        const Duration(seconds: 2),
+      );
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const LoginScreen(),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      String mensagem = 'Não foi possível criar a conta.';
+
+      if (e.toString().contains('já está cadastrado')) {
+        mensagem = 'Este e-mail já está cadastrado.';
+      } else if (e.toString().contains('cadastro pendente')) {
+        mensagem = 'Este e-mail já possui um cadastro pendente.';
+      } else if (e.toString().contains('não coincidem')) {
+        mensagem = 'As senhas não coincidem.';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(mensagem),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _carregando = false;
+        });
+      }
+    }
   }
 
+  // Volta para a tela de login
   void _irParaEntrar() {
-  Navigator.of(context).pushReplacement(
-    MaterialPageRoute(
-      builder: (context) => const LoginScreen(),
-    ),
-  );
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => const LoginScreen(),
+      ),
+    );
   }
 
   @override
   void dispose() {
     _nomeController.dispose();
-    _emailTelefoneController.dispose();
+    _emailController.dispose();
     _senhaController.dispose();
     _confirmarSenhaController.dispose();
+
     super.dispose();
   }
 
+  // Estilo padrão dos campos
   InputDecoration _decoracaoCampo(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: Colors.grey[500]),
+      hintStyle: const TextStyle(color: AppColors.textSecondary),
       filled: true,
-      fillColor: Colors.grey[100],
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      fillColor: AppColors.pillBackground,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 16,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
         borderSide: BorderSide.none,
@@ -138,6 +197,7 @@ class _CadastroPageState extends State<CadastroPage> {
     );
   }
 
+  // Cria o rótulo dos campos
   Widget _rotuloCampo(String texto) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -146,7 +206,7 @@ class _CadastroPageState extends State<CadastroPage> {
         style: const TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w500,
-          color: Colors.black87,
+          color: AppColors.textPrimary,
         ),
       ),
     );
@@ -155,17 +215,23 @@ class _CadastroPageState extends State<CadastroPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 16,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Align(
                 alignment: Alignment.topLeft,
                 child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.black87),
+                  icon: const Icon(
+                    Icons.close,
+                    color: AppColors.textPrimary,
+                  ),
                   onPressed: () => Navigator.of(context).maybePop(),
                 ),
               ),
@@ -177,16 +243,18 @@ class _CadastroPageState extends State<CadastroPage> {
                     width: 56,
                     height: 56,
                     decoration: const BoxDecoration(
-                      color: corPrincipal,
+                      color: AppColors.accent,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.event_available,
-                      color: Colors.white,
+                      color: AppColors.textOnDark,
                       size: 28,
                     ),
                   ),
+
                   const SizedBox(width: 16),
+
                   const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -195,13 +263,14 @@ class _CadastroPageState extends State<CadastroPage> {
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       Text(
                         'Organize seu dia com simplicidade',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -216,12 +285,18 @@ class _CadastroPageState extends State<CadastroPage> {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
               ),
+
               const SizedBox(height: 4),
+
               const Text(
                 'Crie sua conta para seus compromissos',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
               ),
 
               const SizedBox(height: 24),
@@ -230,32 +305,46 @@ class _CadastroPageState extends State<CadastroPage> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: AppColors.cardBackground,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _rotuloCampo('Nome Completo'),
+
                     TextField(
                       controller: _nomeController,
-                      decoration: _decoracaoCampo('Digite seu nome completo'),
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: _decoracaoCampo(
+                        'Digite seu nome completo',
+                      ),
                     ),
+
                     const SizedBox(height: 20),
 
-                    _rotuloCampo('E-mail ou Telefone'),
+                    _rotuloCampo('E-mail'),
+
                     TextField(
-                      controller: _emailTelefoneController,
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(color: AppColors.textPrimary),
                       decoration: _decoracaoCampo(
-                          'ex: maria@clinica.com ou (11) 98765-4321'),
+                        'ex: maria@clinica.com',
+                      ),
                     ),
+
                     const SizedBox(height: 20),
 
                     _rotuloCampo('Senha'),
+
                     TextField(
                       controller: _senhaController,
                       obscureText: !_senhaVisivel,
-                      decoration: _decoracaoCampo('Digite a senha').copyWith(
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: _decoracaoCampo(
+                        'Digite a senha',
+                      ).copyWith(
                         suffixIcon: TextButton(
                           onPressed: () {
                             setState(() {
@@ -264,18 +353,25 @@ class _CadastroPageState extends State<CadastroPage> {
                           },
                           child: Text(
                             _senhaVisivel ? 'Ocultar' : 'Ver',
-                            style: const TextStyle(color: Colors.black54),
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 20),
 
                     _rotuloCampo('Confirmar senha'),
+
                     TextField(
                       controller: _confirmarSenhaController,
                       obscureText: !_senhaVisivel,
-                      decoration: _decoracaoCampo('Confirmar senha'),
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: _decoracaoCampo(
+                        'Confirmar senha',
+                      ),
                     ),
                   ],
                 ),
@@ -288,22 +384,35 @@ class _CadastroPageState extends State<CadastroPage> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: _botaoHabilitado ? _criarConta : null,
+                  onPressed: _botaoHabilitado && !_carregando
+                      ? _criarConta
+                      : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: corPrincipal,
-                    disabledBackgroundColor: corPrincipal.withValues(alpha: 0.06),
+                    backgroundColor: AppColors.accentDark,
+                    disabledBackgroundColor:
+                        AppColors.accentDark.withValues(alpha: 0.3),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
+                    elevation: 0,
                   ),
-                  child: const Text(
-                    'Criar conta',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: _carregando
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.textOnDark,
+                          ),
+                        )
+                      : const Text(
+                          'Criar conta',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textOnDark,
+                          ),
+                        ),
                 ),
               ),
 
@@ -316,14 +425,17 @@ class _CadastroPageState extends State<CadastroPage> {
                   children: [
                     const Text(
                       'Já tem uma conta? ',
-                      style: TextStyle(color: Colors.black54),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
+
                     GestureDetector(
                       onTap: _irParaEntrar,
                       child: const Text(
                         'Entrar',
                         style: TextStyle(
-                          color: corPrincipal,
+                          color: AppColors.accentDark,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

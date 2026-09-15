@@ -22,4 +22,11 @@ async def get_current_user_id(
             detail="Token inválido ou expirado",
         )
 
-    return int(user_id)
+    # Impede que um sub inválido provoque um 500.
+    try:
+        return int(user_id)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=401,
+            detail="Token inválido ou expirado",
+        )

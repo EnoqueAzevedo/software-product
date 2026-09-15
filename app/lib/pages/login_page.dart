@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'cadastro_page.dart';
+import '../services/api_service.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,10 +18,47 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _keepConnected = true;
 
-  static const Color primaryGreen = Color(0xFF6FCF3B);
-  static const Color darkText = Color(0xFF1F2937);
-  static const Color greyText = Color(0xFF6B7280);
-  static const Color fieldFill = Color(0xFFF3F4F6);
+  // Faz login e abre a Home
+  Future<void> _login() async {
+    try {
+      // Faz login na API
+      await ApiService.login(
+        email: _loginController.text.trim(),
+        senha: _passwordController.text,
+      );
+
+      // Confirma a autenticação usando o token
+      final usuario = await ApiService.getMe();
+
+      // Verifica se a tela ainda está disponível
+      if (!mounted) return;
+
+      // Mostra os dados recebidos no terminal
+      print('USUÁRIO AUTENTICADO: $usuario');
+
+      // Abre a Home e remove o login da navegação
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ),
+      );
+    } catch (e) {
+      // Mostra o erro no terminal
+      print('ERRO NO LOGIN: $e');
+
+      // Verifica se a tela ainda está disponível
+      if (!mounted) return;
+
+      // Mostra o erro para o usuário
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não foi possível entrar. Verifique seus dados.',
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -30,9 +70,13 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 16,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -62,11 +106,14 @@ class _LoginScreenState extends State<LoginScreen> {
           width: 56,
           height: 56,
           decoration: const BoxDecoration(
-            color: primaryGreen,
+            color: AppColors.accent,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.assignment_turned_in_outlined,
-              color: Colors.white, size: 28),
+          child: const Icon(
+            Icons.assignment_turned_in_outlined,
+            color: AppColors.textOnDark,
+            size: 28,
+          ),
         ),
         const SizedBox(width: 14),
         const Expanded(
@@ -74,16 +121,19 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'AgendaFácil',
+                'Agenda Pulcro',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: darkText,
+                  color: AppColors.textPrimary,
                 ),
               ),
               Text(
                 'Organize seu dia com simplicidade',
-                style: TextStyle(fontSize: 13, color: greyText),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
           ),
@@ -106,13 +156,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
-                  color: darkText,
+                  color: AppColors.textPrimary,
                 ),
               ),
               SizedBox(height: 6),
               Text(
                 'Acesse sua agenda e gerenciamento de compromissos',
-                style: TextStyle(fontSize: 14, color: greyText, height: 1.4),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
               ),
             ],
           ),
@@ -133,12 +187,20 @@ class _LoginScreenState extends State<LoginScreen> {
           Positioned(
             left: 0,
             bottom: 0,
-            child: Icon(Icons.mail_outline, color: primaryGreen.withValues(alpha: 0.5), size: 32),
+            child: Icon(
+              Icons.mail_outline,
+              color: AppColors.accent.withValues(alpha: 0.5),
+              size: 32,
+            ),
           ),
           Positioned(
             left: 10,
             bottom: 20,
-            child: Icon(Icons.mail_outline, color: primaryGreen, size: 26),
+            child: const Icon(
+              Icons.mail_outline,
+              color: AppColors.accent,
+              size: 26,
+            ),
           ),
           Positioned(
             right: 0,
@@ -147,9 +209,12 @@ class _LoginScreenState extends State<LoginScreen> {
               width: 46,
               height: 70,
               decoration: BoxDecoration(
-                color: primaryGreen,
+                color: AppColors.accent,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300, width: 3),
+                border: Border.all(
+                  color: AppColors.divider,
+                  width: 3,
+                ),
               ),
             ),
           ),
@@ -163,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -176,16 +241,28 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('E-mail ou Telefone',
-              style: TextStyle(fontSize: 14, color: darkText, fontWeight: FontWeight.w500)),
+          const Text(
+            'E-mail',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           const SizedBox(height: 8),
           _buildTextField(
             controller: _loginController,
-            hint: 'ex: maria@clinica.com ou (11) 98765-4321',
+            hint: 'ex: maria@clinica.com',
           ),
           const SizedBox(height: 18),
-          const Text('Senha',
-              style: TextStyle(fontSize: 14, color: darkText, fontWeight: FontWeight.w500)),
+          const Text(
+            'Senha',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -198,10 +275,17 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(width: 10),
               TextButton(
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
                 child: Text(
                   _obscurePassword ? 'Ver' : 'Ocultar',
-                  style: const TextStyle(color: darkText, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
@@ -214,11 +298,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Switch(
                     value: _keepConnected,
-                    activeThumbColor: primaryGreen,
-                    onChanged: (v) => setState(() => _keepConnected = v),
+                    activeThumbColor: AppColors.accent,
+                    activeTrackColor: AppColors.pillBackground,
+                    onChanged: (v) {
+                      setState(() {
+                        _keepConnected = v;
+                      });
+                    },
                   ),
-                  const Text('Manter-se conectado',
-                      style: TextStyle(fontSize: 13, color: darkText)),
+                  const Text(
+                    'Manter-se conectado',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                 ],
               ),
               Column(
@@ -227,23 +321,33 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextButton(
                     onPressed: () {},
                     style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(0, 0),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                    child: const Text('Esqueceu a senha',
-                        style: TextStyle(fontSize: 12, color: greyText)),
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 0),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text(
+                      'Esqueceu a senha',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ),
                   TextButton(
                     onPressed: () {},
                     style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(0, 0),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                    child: const Text('Alterar a senha',
-                        style: TextStyle(
-                            fontSize: 13,
-                            color: primaryGreen,
-                            fontWeight: FontWeight.w600)),
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 0),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text(
+                      'Alterar a senha',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.accentDark,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -254,18 +358,22 @@ class _LoginScreenState extends State<LoginScreen> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: _login,
               style: ElevatedButton.styleFrom(
-                backgroundColor: primaryGreen,
+                backgroundColor: AppColors.accentDark,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(26)),
+                  borderRadius: BorderRadius.circular(26),
+                ),
                 elevation: 0,
               ),
-              child: const Text('Entrar',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white)),
+              child: const Text(
+                'Entrar',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textOnDark,
+                ),
+              ),
             ),
           ),
         ],
@@ -280,19 +388,27 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: fieldFill,
+        color: AppColors.pillBackground,
         borderRadius: BorderRadius.circular(26),
       ),
       child: TextField(
         controller: controller,
         obscureText: obscure,
-        style: const TextStyle(fontSize: 14, color: darkText),
+        style: const TextStyle(
+          fontSize: 14,
+          color: AppColors.textPrimary,
+        ),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(fontSize: 13, color: greyText),
+          hintStyle: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
         ),
       ),
     );
@@ -300,53 +416,55 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // "Ainda não tem conta?" + criar conta
   Widget _buildGuestSection() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'Ainda não tem conta?',
-        style: TextStyle(
-          fontSize: 13,
-          color: greyText,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Ainda não tem conta?',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
         ),
-      ),
-      const SizedBox(height: 10),
-      SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: OutlinedButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const CadastroPage(),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: OutlinedButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const CadastroPage(),
+                ),
+              );
+            },
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(
+                color: AppColors.divider,
               ),
-            );
-          },
-          style: OutlinedButton.styleFrom(
-            side: BorderSide(color: Colors.grey.shade300),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(26),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(26),
+              ),
             ),
-          ),
-          child: const Text(
-            'Criar conta',
-            style: TextStyle(
-              color: darkText,
-              fontWeight: FontWeight.w500,
+            child: const Text(
+              'Criar conta',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   // Card de permissão de notificações
   Widget _buildNotificationCard() {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFFAE7),
+        color: AppColors.beigeCard,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -355,28 +473,42 @@ class _LoginScreenState extends State<LoginScreen> {
             width: 40,
             height: 40,
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: AppColors.cardBackground,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.notifications_none, color: primaryGreen),
+            child: const Icon(
+              Icons.notifications_none,
+              color: AppColors.accentDark,
+            ),
           ),
           const SizedBox(width: 12),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Ativar notificações',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: darkText)),
+                Text(
+                  'Ativar notificações',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 SizedBox(height: 2),
-                Text('Receba lembretes e confirmações de compromissos',
-                    style: TextStyle(fontSize: 12, color: greyText)),
+                Text(
+                  'Receba lembretes e confirmações de compromissos',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: greyText),
+          const Icon(
+            Icons.chevron_right,
+            color: AppColors.textSecondary,
+          ),
         ],
       ),
     );
@@ -386,9 +518,13 @@ class _LoginScreenState extends State<LoginScreen> {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 4),
       child: Text(
-        'Ao continuar, você concorda com os termos de uso e a política de privacidade da AgendaFácil.',
+        'Ao continuar, você concorda com os termos de uso e a política de privacidade da Agenda Pulcro.',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 11, color: greyText, height: 1.4),
+        style: TextStyle(
+          fontSize: 11,
+          color: AppColors.textSecondary,
+          height: 1.4,
+        ),
       ),
     );
   }
