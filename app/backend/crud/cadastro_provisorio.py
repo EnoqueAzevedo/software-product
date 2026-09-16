@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, timezone
 import secrets
-
 from pwdlib import PasswordHash
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -80,7 +79,9 @@ async def create_cadastro_provisorio(
     )
 
     db.add(cadastro)
-    await db.commit()
+
+    # Prepara o registro sem confirmar a transação
+    await db.flush()
 
     return cadastro, None
 

@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from crud.cadastro_provisorio import (
     create_cadastro_provisorio,
     confirmar_cadastro_provisorio,
@@ -20,10 +19,7 @@ router = APIRouter(
 )
 
 
-# ============================================================
-# INICIA UM NOVO CADASTRO PROVISÓRIO
-# ============================================================
-
+# Inicia um novo cadastro provisório
 @router.post(
     "/register",
     response_model=CadastroProvisorioResponse,
@@ -49,19 +45,32 @@ async def register(
         f"{cadastro.token_confirmacao}"
     )
 
-    # Envia o e-mail de confirmação
-    await enviar_email(
-        destinatario=cadastro.email,
-        assunto="Confirme seu cadastro no Agenda Pulcro",
-        mensagem=(
-            f"Olá, {cadastro.nome}!\n\n"
-            "Seu cadastro no Agenda Pulcro foi criado.\n\n"
-            "Para confirmar sua conta, acesse o link abaixo:\n\n"
-            f"{link_confirmacao}\n\n"
-            "Este link é válido por 24 horas.\n\n"
-            "Se você não realizou este cadastro, ignore este e-mail."
-        ),
-    )
+    try:
+        # Envia o e-mail antes de confirmar o cadastro no banco
+        await enviar_email(
+            destinatario=cadastro.email,
+            assunto="Confirme seu cadastro no Agenda Pulcro",
+            mensagem=(
+                f"Olá, {cadastro.nome}!\n\n"
+                "Seu cadastro no Agenda Pulcro foi criado.\n\n"
+                "Para confirmar sua conta, acesse o link abaixo:\n\n"
+                f"{link_confirmacao}\n\n"
+                "Este link é válido por 24 horas.\n\n"
+                "Se você não realizou este cadastro, ignore este e-mail."
+            ),
+        )
+
+        # Só confirma o cadastro depois que o e-mail foi aceito
+        await db.commit()
+
+    except Exception as erro_email:
+        # Desfaz o cadastro se o envio do e-mail falhar
+        await db.rollback()
+
+        raise HTTPException(
+            status_code=502,
+            detail="Não foi possível enviar o e-mail de confirmação.",
+        ) from erro_email
 
     return CadastroProvisorioResponse(
         mensagem=(
@@ -72,10 +81,7 @@ async def register(
     )
 
 
-# ============================================================
-# CONFIRMA O CADASTRO PELO LINK ENVIADO POR E-MAIL
-# ============================================================
-
+# Confirma o cadastro quando o usuário acessa o link do e-mail
 @router.get(
     "/confirm/{token}",
     response_class=HTMLResponse,
@@ -92,48 +98,40 @@ async def confirm(
     if erro:
         return HTMLResponse(
             content=f"""
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda Pulcro - Confirmação</title>
-</head>
-
-<body>
-    <h1>Não foi possível confirmar</h1>
-
-    <p>{erro}</p>
-</body>
-</html>
-""",
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <title>Agenda Pulcro - Confirmação</title>
+            </head>
+            <body>
+                <h1>Não foi possível confirmar</h1>
+                <p>{erro}</p>
+            </body>
+            </html>
+            """,
             status_code=400,
         )
 
     return HTMLResponse(
         content="""
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda Pulcro - Conta confirmada</title>
-</head>
-
-<body>
-    <h1>Conta confirmada com sucesso!</h1>
-
-    <p>
-        Seu e-mail foi confirmado e sua conta no
-        Agenda Pulcro está ativa.
-    </p>
-
-    <p>
-        Agora você pode voltar para o aplicativo
-        e fazer login.
-    </p>
-</body>
-</html>
-""",
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <title>Agenda Pulcro - Conta confirmada</title>
+        </head>
+        <body>
+            <h1>Conta confirmada com sucesso!</h1>
+            <p>
+                Seu e-mail foi confirmado e sua conta no
+                Agenda Pulcro está ativa.
+            </p>
+            <p>
+                Agora você pode voltar para o aplicativo e fazer login.
+            </p>
+        </body>
+        </html>
+        """,
         status_code=200,
     )
