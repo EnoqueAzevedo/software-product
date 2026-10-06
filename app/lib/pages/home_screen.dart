@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
-
 // Página inicial aberta depois do login
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,7 +12,6 @@ class HomeScreen extends StatefulWidget {
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
-
 
 class _HomeScreenState extends State<HomeScreen> {
   String nomeUsuario = 'Carregando...';
@@ -28,7 +26,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _carregarUsuario();
     _carregarServicos();
   }
-
 
   // Busca os dados do usuário autenticado
   Future<void> _carregarUsuario() async {
@@ -53,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
   // Busca os serviços cadastrados no banco
   Future<void> _carregarServicos() async {
     try {
@@ -76,7 +72,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,9 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _HomeHeader(
-                      nomeUsuario: nomeUsuario,
-                    ),
+                    _HomeHeader(nomeUsuario: nomeUsuario),
                     const SizedBox(height: AppSpacing.lg),
                     const _HeroCard(),
                     const SizedBox(height: AppSpacing.md),
@@ -123,12 +116,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-
 // Cabeçalho com usuário, busca e notificações
 class _HomeHeader extends StatelessWidget {
-  const _HomeHeader({
-    required this.nomeUsuario,
-  });
+  const _HomeHeader({required this.nomeUsuario});
 
   final String nomeUsuario;
 
@@ -138,10 +128,8 @@ class _HomeHeader extends StatelessWidget {
       children: [
         const CircleAvatar(
           radius: 24,
-          backgroundColor: AppColors.beigeCard, // ser a imagem nao carregar 
-          backgroundImage: NetworkImage(
-            'https://i.pravatar.cc/150?img=47',
-          ),
+          backgroundColor: AppColors.beigeCard, // ser a imagem nao carregar
+          backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=47'),
         ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
@@ -150,27 +138,24 @@ class _HomeHeader extends StatelessWidget {
             children: [
               const Text(
                 'Bom dia,',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
               Text(
                 nomeUsuario.isNotEmpty
                     ? '${nomeUsuario[0].toUpperCase()}${nomeUsuario.substring(1)}'
                     : '',
                 style: Theme.of(context).textTheme.cormorantTitle?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-              )
+                  color: AppColors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),
         _CircleIconButton(
           icon: Icons.search,
-          background: AppColors.cardBackground,
+          background: const Color.fromRGBO(255, 255, 255, 1),
           iconColor: AppColors.textPrimary,
           onTap: () {},
         ),
@@ -186,7 +171,6 @@ class _HomeHeader extends StatelessWidget {
     );
   }
 }
-
 
 // Botão circular do cabeçalho
 class _CircleIconButton extends StatelessWidget {
@@ -212,19 +196,10 @@ class _CircleIconButton extends StatelessWidget {
       child: Container(
         width: 44,
         height: 44,
-        decoration: BoxDecoration(
-          color: background,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: background, shape: BoxShape.circle),
         child: Stack(
           children: [
-            Center(
-              child: Icon(
-                icon,
-                color: iconColor,
-                size: 20,
-              ),
-            ),
+            Center(child: Icon(icon, color: iconColor, size: 20)),
             if (showBadge)
               Positioned(
                 right: 10,
@@ -245,7 +220,6 @@ class _CircleIconButton extends StatelessWidget {
   }
 }
 
-
 // Card principal de destaque
 class _HeroCard extends StatelessWidget {
   const _HeroCard();
@@ -259,10 +233,7 @@ class _HeroCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.heroBackground,
-            AppColors.heroBackgroundLight,
-          ],
+          colors: [AppColors.heroBackground, AppColors.heroBackgroundLight],
         ),
       ),
       child: Row(
@@ -279,9 +250,7 @@ class _HeroCard extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(
-                      AppRadius.pill,
-                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: const Text(
                     'Studio',
@@ -305,10 +274,7 @@ class _HeroCard extends StatelessWidget {
                     children: [
                       Text('Ver rituais'),
                       SizedBox(width: 6),
-                      Icon(
-                        Icons.arrow_forward,
-                        size: 16,
-                      ),
+                      Icon(Icons.arrow_forward, size: 16),
                     ],
                   ),
                 ),
@@ -317,9 +283,7 @@ class _HeroCard extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           ClipRRect(
-            borderRadius: BorderRadius.circular(
-              AppRadius.medium,
-            ),
+            borderRadius: BorderRadius.circular(AppRadius.medium),
             child: Image.network(
               'https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=400',
               width: 96,
@@ -333,7 +297,6 @@ class _HeroCard extends StatelessWidget {
   }
 }
 
-
 // Card com o próximo horário
 class _NextAppointmentCard extends StatelessWidget {
   const _NextAppointmentCard();
@@ -344,9 +307,7 @@ class _NextAppointmentCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.beigeCard,
-        borderRadius: BorderRadius.circular(
-          AppRadius.large,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.large),
       ),
       child: Row(
         children: [
@@ -390,9 +351,7 @@ class _NextAppointmentCard extends StatelessWidget {
             ),
           ),
           const Padding(
-            padding: EdgeInsets.only(
-              left: AppSpacing.sm,
-            ),
+            padding: EdgeInsets.only(left: AppSpacing.sm),
             child: Text(
               'Detalhes',
               style: TextStyle(
@@ -409,13 +368,9 @@ class _NextAppointmentCard extends StatelessWidget {
   }
 }
 
-
 // Título de uma seção
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({
-    required this.title,
-    required this.actionLabel,
-  });
+  const _SectionTitle({required this.title, required this.actionLabel});
 
   final String title;
   final String actionLabel;
@@ -425,10 +380,7 @@ class _SectionTitle extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
+        Text(title, style: Theme.of(context).textTheme.titleLarge),
         Text(
           actionLabel,
           style: const TextStyle(
@@ -442,7 +394,6 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
-
 
 // Lista de serviços vindos da API
 class _PopularServicesGrid extends StatelessWidget {
@@ -471,9 +422,7 @@ class _PopularServicesGrid extends StatelessWidget {
         child: Center(
           child: Text(
             'Nenhum serviço disponível.',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
         ),
       );
@@ -483,8 +432,7 @@ class _PopularServicesGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: servicos.length,
-      gridDelegate:
-          const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: AppSpacing.md,
         crossAxisSpacing: AppSpacing.md,
@@ -493,20 +441,15 @@ class _PopularServicesGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         final servico = servicos[index];
 
-        return _ServiceCard(
-          servico: servico,
-        );
+        return _ServiceCard(servico: servico);
       },
     );
   }
 }
 
-
 // Card individual de serviço
 class _ServiceCard extends StatelessWidget {
-  const _ServiceCard({
-    required this.servico,
-  });
+  const _ServiceCard({required this.servico});
 
   final dynamic servico;
 
@@ -523,9 +466,7 @@ class _ServiceCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(
-          AppRadius.large,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.large),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -556,12 +497,7 @@ class _ServiceCard extends StatelessWidget {
                   ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              10,
-              8,
-              10,
-              10,
-            ),
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -594,8 +530,7 @@ class _ServiceCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       preco,
@@ -625,7 +560,6 @@ class _ServiceCard extends StatelessWidget {
     );
   }
 
-
   // Escolhe um ícone de acordo com o serviço
   IconData _iconeDoServico(String nome) {
     final nomeNormalizado = nome.toLowerCase();
@@ -650,7 +584,6 @@ class _ServiceCard extends StatelessWidget {
   }
 }
 
-
 // Barra de navegação inferior
 class _BottomNavBar extends StatelessWidget {
   const _BottomNavBar();
@@ -658,22 +591,13 @@ class _BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(
-        top: 10,
-        bottom: 8,
-      ),
+      padding: const EdgeInsets.only(top: 10, bottom: 8),
       decoration: const BoxDecoration(
         color: AppColors.cardBackground,
-        border: Border(
-          top: BorderSide(
-            color: AppColors.divider,
-            width: 1,
-          ),
-        ),
+        border: Border(top: BorderSide(color: AppColors.divider, width: 1)),
       ),
       child: Row(
-        mainAxisAlignment:
-            MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const _NavItem(
@@ -681,27 +605,15 @@ class _BottomNavBar extends StatelessWidget {
             label: 'Início',
             selected: true,
           ),
-          const _NavItem(
-            icon: Icons.spa_outlined,
-            label: 'Serviços',
-          ),
-          _NavFabItem(
-            onTap: () {},
-          ),
-          const _NavItem(
-            icon: Icons.calendar_month_outlined,
-            label: 'Agenda',
-          ),
-          const _NavItem(
-            icon: Icons.person_outline_rounded,
-            label: 'Perfil',
-          ),
+          const _NavItem(icon: Icons.spa_outlined, label: 'Serviços'),
+          _NavFabItem(onTap: () {}),
+          const _NavItem(icon: Icons.calendar_month_outlined, label: 'Agenda'),
+          const _NavItem(icon: Icons.person_outline_rounded, label: 'Perfil'),
         ],
       ),
     );
   }
 }
-
 
 // Item da navegação inferior
 class _NavItem extends StatelessWidget {
@@ -717,27 +629,19 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected
-        ? AppColors.accentDark
-        : AppColors.textSecondary;
+    final color = selected ? AppColors.accentDark : AppColors.textSecondary;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          icon,
-          color: color,
-          size: 22,
-        ),
+        Icon(icon, color: color, size: 22),
         const SizedBox(height: 2),
         Text(
           label,
           style: TextStyle(
             color: color,
             fontSize: 11,
-            fontWeight: selected
-                ? FontWeight.w600
-                : FontWeight.w400,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
       ],
@@ -745,42 +649,32 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-
 // Botão central para novo agendamento
 class _NavFabItem extends StatelessWidget {
-  const _NavFabItem({
-    required this.onTap,
-  });
+  const _NavFabItem({required this.onTap});
 
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Transform.translate(
-      offset: const Offset(0, -14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
-        child: Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: AppColors.accent,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accent.withOpacity(0.35),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-            size: 26,
-          ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: AppColors.accent,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.accent.withOpacity(0.35),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
+        child: const Icon(Icons.add, color: Colors.white, size: 26),
       ),
     );
   }

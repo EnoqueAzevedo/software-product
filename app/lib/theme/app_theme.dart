@@ -52,7 +52,6 @@ class AppTheme {
         primary: AppColors.accent,
         secondary: AppColors.accentDark,
         surface: AppColors.cardBackground,
-        background: AppColors.background,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,

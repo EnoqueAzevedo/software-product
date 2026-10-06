@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'pages/login_page.dart';
 import 'theme/app_theme.dart';
 import 'services/api_service.dart';
-import 'pages/home_screen.dart';
 
 
 void main() {
@@ -12,7 +11,6 @@ void main() {
 
   runApp(const AgendaPulcroApp());
 }
-
 
 // Testa a comunicação com o backend
 Future<void> testarApi() async {
@@ -25,7 +23,6 @@ Future<void> testarApi() async {
   }
 }
 
-
 // Testa a busca dos serviços
 Future<void> testarServicos() async {
   try {
@@ -36,7 +33,6 @@ Future<void> testarServicos() async {
     print('ERRO AO BUSCAR SERVIÇOS: $e');
   }
 }
-
 
 // Aplicativo principal
 class AgendaPulcroApp extends StatelessWidget {
