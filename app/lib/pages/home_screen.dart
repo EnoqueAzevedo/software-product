@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
+// Largura máxima do conteúdo: em tablets e telas largas ele fica centralizado
+const double _larguraMaxima = 720;
+
 // Página inicial aberta depois do login
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -74,49 +77,61 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.md,
-                  AppSpacing.sm,
-                  AppSpacing.md,
-                  AppSpacing.md,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _HomeHeader(nomeUsuario: nomeUsuario),
-                    const SizedBox(height: AppSpacing.lg),
-                    const _HeroCard(),
-                    const SizedBox(height: AppSpacing.md),
-                    const _NextAppointmentCard(),
-                    const SizedBox(height: AppSpacing.lg),
-                    const _SectionTitle(
-                      title: 'Serviços populares',
-                      actionLabel: 'Ver todos',
+    final mediaQuery = MediaQuery.of(context);
+
+    return MediaQuery(
+      // Limita o aumento de fonte do sistema para o layout não quebrar
+      data: mediaQuery.copyWith(
+        textScaler: mediaQuery.textScaler.clamp(maxScaleFactor: 1.3),
+      ),
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: _larguraMaxima,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md,
+                          AppSpacing.sm,
+                          AppSpacing.md,
+                          AppSpacing.md,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _HomeHeader(nomeUsuario: nomeUsuario),
+                            const SizedBox(height: AppSpacing.md),
+                            const _Tagline(),
+                            const SizedBox(height: AppSpacing.md),
+                            const _HeroCard(),
+                            const SizedBox(height: AppSpacing.lg),
+                            _ServicesList(
+                              servicos: servicos,
+                              carregando: carregandoServicos,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    _PopularServicesGrid(
-                      servicos: servicos,
-                      carregando: carregandoServicos,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-            const _BottomNavBar(),
-          ],
+              const _BottomNavBar(),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// Cabeçalho com usuário, busca e notificações
+// Cabeçalho com usuário e notificações
 class _HomeHeader extends StatelessWidget {
   const _HomeHeader({required this.nomeUsuario});
 
@@ -128,10 +143,10 @@ class _HomeHeader extends StatelessWidget {
       children: [
         const CircleAvatar(
           radius: 24,
-          backgroundColor: AppColors.beigeCard, // ser a imagem nao carregar
+          backgroundColor: AppColors.beigeCard, // aparece se a imagem não carregar
           backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=47'),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: AppSpacing.sm + 4),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,22 +159,17 @@ class _HomeHeader extends StatelessWidget {
                 nomeUsuario.isNotEmpty
                     ? '${nomeUsuario[0].toUpperCase()}${nomeUsuario.substring(1)}'
                     : '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.cormorantTitle.copyWith(
                   color: AppColors.textPrimary,
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
         ),
-        _CircleIconButton(
-          icon: Icons.search,
-          background: AppColors.cardBackground,
-          iconColor: AppColors.textPrimary,
-          onTap: () {},
-        ),
-        const SizedBox(width: AppSpacing.sm),
         _CircleIconButton(
           icon: Icons.notifications_none_rounded,
           background: AppColors.heroBackground,
@@ -199,14 +209,14 @@ class _CircleIconButton extends StatelessWidget {
         decoration: BoxDecoration(color: background, shape: BoxShape.circle),
         child: Stack(
           children: [
-            Center(child: Icon(icon, color: iconColor, size: 20)),
+            Center(child: Icon(icon, color: iconColor, size: 22)),
             if (showBadge)
               Positioned(
                 right: 10,
                 top: 10,
                 child: Container(
-                  width: 8,
-                  height: 8,
+                  width: 9,
+                  height: 9,
                   decoration: const BoxDecoration(
                     color: AppColors.accent,
                     shape: BoxShape.circle,
@@ -220,187 +230,127 @@ class _CircleIconButton extends StatelessWidget {
   }
 }
 
-// Card principal de destaque
+// Frase logo abaixo do cabeçalho
+class _Tagline extends StatelessWidget {
+  const _Tagline();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        Flexible(
+          child: Text(
+            'Beleza que cabe na sua rotina',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        SizedBox(width: AppSpacing.sm),
+        Icon(Icons.favorite_border_rounded, color: AppColors.accent, size: 22),
+      ],
+    );
+  }
+}
+
+// Card principal de destaque: foto ocupando o card todo, com degradê rosado
+// à esquerda para dar leitura ao texto
 class _HeroCard extends StatelessWidget {
   const _HeroCard();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.large),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.heroBackground, AppColors.heroBackgroundLight],
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final titulo = Theme.of(context).textTheme.cormorantTitle;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final largura = constraints.maxWidth;
+
+        // Altura e fontes crescem com a largura, dentro de limites
+        final altura = (largura / 1.9).clamp(200.0, 340.0).toDouble();
+        final fonteTitulo = (largura * 0.095).clamp(30.0, 52.0).toDouble();
+        final fonteSubtitulo = (largura * 0.048).clamp(16.0, 24.0).toDouble();
+
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.large),
+          child: SizedBox(
+            height: altura,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
+                // Fundo que aparece se a foto não carregar
+                const ColoredBox(color: AppColors.heroBackgroundLight),
+                Image.network(
+                  'https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=800',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.centerRight,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const SizedBox.shrink(),
+                ),
+                // Degradê da esquerda (mais forte) para a direita (transparente)
+                DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: const Text(
-                    'Studio',
-                    style: TextStyle(
-                      color: AppColors.textOnDarkMuted,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        AppColors.heroBackgroundLight.withValues(alpha: 0.95),
+                        AppColors.accent.withValues(alpha: 0.70),
+                        AppColors.accent.withValues(alpha: 0.0),
+                      ],
+                      stops: const [0.0, 0.5, 0.85],
                     ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'Seu momento de\ncuidado começa aqui',
-                  style: Theme.of(context).textTheme.cormorantTitle,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                ElevatedButton(
-                  onPressed: () {},
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.md,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('Ver rituais'),
-                      SizedBox(width: 6),
-                      Icon(Icons.arrow_forward, size: 16),
+                      Text(
+                        'Cuide de você',
+                        style: titulo.copyWith(
+                          fontSize: fonteSubtitulo,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        'Hoje\nsempre',
+                        style: titulo.copyWith(fontSize: fonteTitulo, height: 1.0),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 10,
+                          ),
+                        ),
+                        child: const Text('Ver ofertas'),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.medium),
-            child: Image.network(
-              'https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=400',
-              width: 96,
-              height: 150,
-              fit: BoxFit.cover,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-// Card com o próximo horário
-class _NextAppointmentCard extends StatelessWidget {
-  const _NextAppointmentCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.beigeCard,
-        borderRadius: BorderRadius.circular(AppRadius.large),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: const BoxDecoration(
-              color: AppColors.cardBackground,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.calendar_today_rounded,
-              color: AppColors.accentDark,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Próximo horário',
-                  style: TextStyle(
-                    color: AppColors.accentDark,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Qui 18 · 15:30 — Massagem\nrelaxante',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(left: AppSpacing.sm),
-            child: Text(
-              'Detalhes',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                decoration: TextDecoration.underline,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Título de uma seção
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title, required this.actionLabel});
-
-  final String title;
-  final String actionLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(title, style: Theme.of(context).textTheme.titleLarge),
-        Text(
-          actionLabel,
-          style: const TextStyle(
-            color: AppColors.accentDark,
-            fontSize: 13.5,
-            fontWeight: FontWeight.w600,
-            decoration: TextDecoration.underline,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Lista de serviços vindos da API
-class _PopularServicesGrid extends StatelessWidget {
-  const _PopularServicesGrid({
-    required this.servicos,
-    required this.carregando,
-  });
+// Lista vertical de serviços vindos da API
+class _ServicesList extends StatelessWidget {
+  const _ServicesList({required this.servicos, required this.carregando});
 
   final List<dynamic> servicos;
   final bool carregando;
@@ -411,7 +361,7 @@ class _PopularServicesGrid extends StatelessWidget {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(AppSpacing.lg),
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(color: AppColors.accent),
         ),
       );
     }
@@ -428,26 +378,27 @@ class _PopularServicesGrid extends StatelessWidget {
       );
     }
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: servicos.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: AppSpacing.md,
-        crossAxisSpacing: AppSpacing.md,
-        childAspectRatio: 0.68,
-      ),
-      itemBuilder: (context, index) {
-        final servico = servicos[index];
+    // 1 coluna no celular, 2 colunas em telas mais largas (tablet/paisagem)
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final colunas = constraints.maxWidth >= 640 ? 2 : 1;
+        final larguraCard =
+            (constraints.maxWidth - AppSpacing.md * (colunas - 1)) / colunas;
 
-        return _ServiceCard(servico: servico);
+        return Wrap(
+          spacing: AppSpacing.md,
+          runSpacing: AppSpacing.md,
+          children: [
+            for (final servico in servicos)
+              SizedBox(width: larguraCard, child: _ServiceCard(servico: servico)),
+          ],
+        );
       },
     );
   }
 }
 
-// Card individual de serviço
+// Card individual de serviço: foto à esquerda, textos e preço à direita
 class _ServiceCard extends StatelessWidget {
   const _ServiceCard({required this.servico});
 
@@ -456,96 +407,128 @@ class _ServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String nome = servico['nome'] ?? 'Serviço';
-    final String duracao = '${servico['duracao'] ?? 0} min';
-    final String preco = 'R\$ ${servico['preco'] ?? 0}';
+
+    // Usa a descrição se a API enviar; senão mostra a duração
+    final String descricao = (servico['descricao'] ?? '').toString().trim();
+    final String subtitulo = descricao.isNotEmpty
+        ? descricao
+        : '${servico['duracao'] ?? 0} min';
+
+    final String preco = _formatarPreco(servico['preco']);
+
+    // Preço antigo (riscado) só aparece se a API enviar 'preco_original'
+    final String? precoOriginal = servico['preco_original'] != null
+        ? _formatarPreco(servico['preco_original'])
+        : null;
 
     final String imagemUrl = servico['imagem_url'] != null
         ? '${ApiService.baseUrl}${servico['imagem_url']}'
         : '';
 
     return Container(
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(AppRadius.large),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.beigeCard.withValues(alpha: 0.7),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AspectRatio(
-            aspectRatio: 1.05,
-            child: imagemUrl.isNotEmpty
-                ? Image.network(
-                    imagemUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(
-                          Icons.image_not_supported_outlined,
-                          color: AppColors.textSecondary,
-                          size: 32,
-                        ),
-                      );
-                    },
-                  )
-                : const Center(
-                    child: Icon(
-                      Icons.image_not_supported_outlined,
-                      color: AppColors.textSecondary,
-                      size: 32,
-                    ),
-                  ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.small),
+            child: SizedBox(
+              width: 88,
+              height: 88,
+              child: ColoredBox(
+                color: AppColors.beigeCard,
+                child: imagemUrl.isNotEmpty
+                    ? Image.network(
+                        imagemUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const _ImagemIndisponivel(),
+                      )
+                    : const _ImagemIndisponivel(),
+              ),
+            ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      _iconeDoServico(nome),
-                      size: 14,
-                      color: AppColors.accentDark,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      duracao,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
                 Text(
                   nome,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
-                    height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 2),
+                Text(
+                  subtitulo,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    height: 1.3,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      preco,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                    Expanded(
+                      child: Wrap(
+                        spacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.end,
+                        children: [
+                          Text(
+                            preco,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.accentDark,
+                            ),
+                          ),
+                          if (precoOriginal != null)
+                            Text(
+                              precoOriginal,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: AppColors.textSecondary,
+                                decoration: TextDecoration.lineThrough,
+                                decorationColor: AppColors.textSecondary,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
+                    const SizedBox(width: AppSpacing.sm),
                     ElevatedButton(
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accentDark,
+                        foregroundColor: AppColors.textOnDark,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
-                          vertical: 6,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.small),
                         ),
                       ),
                       child: const Text('Agendar'),
@@ -559,29 +542,31 @@ class _ServiceCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  // Escolhe um ícone de acordo com o serviço
-  IconData _iconeDoServico(String nome) {
-    final nomeNormalizado = nome.toLowerCase();
+// Ícone mostrado quando o serviço não tem foto ou ela falha ao carregar
+class _ImagemIndisponivel extends StatelessWidget {
+  const _ImagemIndisponivel();
 
-    if (nomeNormalizado.contains('limpeza')) {
-      return Icons.spa_rounded;
-    }
-
-    if (nomeNormalizado.contains('massagem')) {
-      return Icons.local_fire_department_rounded;
-    }
-
-    if (nomeNormalizado.contains('sobrancelha')) {
-      return Icons.remove_red_eye_outlined;
-    }
-
-    if (nomeNormalizado.contains('manicure')) {
-      return Icons.back_hand_outlined;
-    }
-
-    return Icons.spa_rounded;
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Icon(
+        Icons.image_not_supported_outlined,
+        color: AppColors.textSecondary,
+        size: 28,
+      ),
+    );
   }
+}
+
+// Converte o valor da API (número ou texto) para o formato "R$ 150,00"
+String _formatarPreco(dynamic valor) {
+  final numero = valor is num
+      ? valor.toDouble()
+      : double.tryParse('$valor'.replaceAll(',', '.')) ?? 0.0;
+
+  return 'R\$ ${numero.toStringAsFixed(2).replaceAll('.', ',')}';
 }
 
 // Barra de navegação inferior
@@ -596,20 +581,32 @@ class _BottomNavBar extends StatelessWidget {
         color: AppColors.cardBackground,
         border: Border(top: BorderSide(color: AppColors.divider, width: 1)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const _NavItem(
-            icon: Icons.home_rounded,
-            label: 'Início',
-            selected: true,
+      // A barra ocupa a tela toda, mas os itens ficam juntos em telas largas
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const _NavItem(
+                icon: Icons.home_rounded,
+                label: 'Início',
+                selected: true,
+              ),
+              const _NavItem(icon: Icons.spa_outlined, label: 'Serviços'),
+              _NavFabItem(onTap: () {}),
+              const _NavItem(
+                icon: Icons.calendar_month_outlined,
+                label: 'Agenda',
+              ),
+              const _NavItem(
+                icon: Icons.person_outline_rounded,
+                label: 'Perfil',
+              ),
+            ],
           ),
-          const _NavItem(icon: Icons.spa_outlined, label: 'Serviços'),
-          _NavFabItem(onTap: () {}),
-          const _NavItem(icon: Icons.calendar_month_outlined, label: 'Agenda'),
-          const _NavItem(icon: Icons.person_outline_rounded, label: 'Perfil'),
-        ],
+        ),
       ),
     );
   }
@@ -634,13 +631,13 @@ class _NavItem extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: color, size: 22),
+        Icon(icon, color: color, size: 24),
         const SizedBox(height: 2),
         Text(
           label,
           style: TextStyle(
             color: color,
-            fontSize: 11,
+            fontSize: 11.5,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
