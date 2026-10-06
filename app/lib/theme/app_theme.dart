@@ -1,22 +1,34 @@
 import 'package:flutter/material.dart';
 
-/// Paleta de cores extraída do design "Studio Essenza".
+/// Paleta de cores 
+
+
 class AppColors {
   AppColors._();
 
-  static const Color background = Color(0xFFFBF3EC);
-  static const Color heroBackground = Color(0xFF2E2420);
-  static const Color heroBackgroundLight = Color(0xFF3E322C);
-  static const Color cardBackground = Color(0xFFFFFFFF);
-  static const Color beigeCard = Color(0xFFF2E4D8);
-  static const Color pillBackground = Color(0xFFEFDFD0);
-  static const Color accent = Color(0xFFA85C42);
-  static const Color accentDark = Color(0xFF8C4A34);
-  static const Color textPrimary = Color(0xFF2E2420);
-  static const Color textSecondary = Color(0xFF8A7A70);
-  static const Color textOnDark = Color(0xFFF5EDE6);
-  static const Color textOnDarkMuted = Color(0xFFD8C9BE);
-  static const Color divider = Color(0xFFEBDFD1);
+  // Fundos
+  static const Color background = Color(0xFFF7EDEE);          // Rosa claro de fundo
+  static const Color cardBackground = Color(0xFFFFFFFF);      // Branco
+  static const Color beigeCard = Color(0xFFE8D3CF);           // Nude rosado
+  static const Color pillBackground = Color(0xFFE8D3CF);      // Nude rosado
+
+  // Hero (área escura)
+  static const Color heroBackground = Color(0xFF7D4B58);      // Vinho suave
+  static const Color heroBackgroundLight = Color(0xFF935F6D); // Vinho um pouco mais claro (derivada)
+
+  // Destaques
+  static const Color accent = Color(0xFFD58F9D);              // Rosa elegante
+  static const Color accentDark = Color(0xFF7D4B58);          // Vinho suave
+
+  // Textos
+  static const Color textPrimary = Color(0xFF7D4B58);         // Vinho suave
+  static const Color textSecondary = Color(0xFFA37F89);       // Vinho esmaecido (derivada)
+  static const Color textOnDark = Color(0xFFF7EDEE);          // Rosa claro
+  static const Color textOnDarkMuted = Color(0xFFE8D3CF);     // Nude rosado
+
+  // Bordas e divisores
+  static const Color divider = Color(0xFFECE7E7);             // Cinza claro
+
 }
 
 /// Raios de borda padronizados usados nos cards e botões.

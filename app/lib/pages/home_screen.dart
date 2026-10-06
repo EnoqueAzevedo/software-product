@@ -144,7 +144,7 @@ class _HomeHeader extends StatelessWidget {
                 nomeUsuario.isNotEmpty
                     ? '${nomeUsuario[0].toUpperCase()}${nomeUsuario.substring(1)}'
                     : '',
-                style: Theme.of(context).textTheme.cormorantTitle?.copyWith(
+                style: Theme.of(context).textTheme.cormorantTitle.copyWith(
                   color: AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -155,7 +155,7 @@ class _HomeHeader extends StatelessWidget {
         ),
         _CircleIconButton(
           icon: Icons.search,
-          background: const Color.fromRGBO(255, 255, 255, 1),
+          background: AppColors.cardBackground,
           iconColor: AppColors.textPrimary,
           onTap: () {},
         ),
@@ -249,7 +249,7 @@ class _HeroCard extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.12),
+                    color: Colors.white.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: const Text(
@@ -668,7 +668,7 @@ class _NavFabItem extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: AppColors.accent.withOpacity(0.35),
+              color: AppColors.accent.withValues(alpha: 0.35),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
