@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import 'servico.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
@@ -143,7 +144,8 @@ class _HomeHeader extends StatelessWidget {
       children: [
         const CircleAvatar(
           radius: 24,
-          backgroundColor: AppColors.beigeCard, // aparece se a imagem não carregar
+          backgroundColor:
+              AppColors.beigeCard, // aparece se a imagem não carregar
           backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=47'),
         ),
         const SizedBox(width: AppSpacing.sm + 4),
@@ -283,8 +285,8 @@ class _HeroCard extends StatelessWidget {
               children: [
                 // Fundo que aparece se a foto não carregar
                 const ColoredBox(color: AppColors.heroBackgroundLight),
-                Image.network(
-                  'https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=800',
+                Image.asset(
+                  'assets/images/home.webp',
                   fit: BoxFit.cover,
                   alignment: Alignment.centerRight,
                   errorBuilder: (context, error, stackTrace) =>
@@ -322,8 +324,11 @@ class _HeroCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Hoje\nsempre',
-                        style: titulo.copyWith(fontSize: fonteTitulo, height: 1.0),
+                        'Hoje e\nsempre',
+                        style: titulo.copyWith(
+                          fontSize: fonteTitulo,
+                          height: 1.0,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       ElevatedButton(
@@ -390,7 +395,10 @@ class _ServicesList extends StatelessWidget {
           runSpacing: AppSpacing.md,
           children: [
             for (final servico in servicos)
-              SizedBox(width: larguraCard, child: _ServiceCard(servico: servico)),
+              SizedBox(
+                width: larguraCard,
+                child: _ServiceCard(servico: servico),
+              ),
           ],
         );
       },
@@ -517,7 +525,12 @@ class _ServiceCard extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () { //chama a pagina servico
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ServicoScreen()), // Nome da classe dentro de servico.dart
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.accentDark,
                         foregroundColor: AppColors.textOnDark,
@@ -596,9 +609,15 @@ class _BottomNavBar extends StatelessWidget {
               ),
               const _NavItem(icon: Icons.spa_outlined, label: 'Serviços'),
               _NavFabItem(onTap: () {}),
-              const _NavItem(
+              _NavItem(
                 icon: Icons.calendar_month_outlined,
                 label: 'Agenda',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ServicoScreen()),
+                  );
+                },
               ),
               const _NavItem(
                 icon: Icons.person_outline_rounded,
@@ -618,30 +637,41 @@ class _NavItem extends StatelessWidget {
     required this.icon,
     required this.label,
     this.selected = false,
+    this.onTap, // 1. Adicionado o parâmetro opcional de clique
   });
 
   final IconData icon;
   final String label;
   final bool selected;
+  final VoidCallback? onTap; // 2. Definido o callback
 
   @override
   Widget build(BuildContext context) {
     final color = selected ? AppColors.accentDark : AppColors.textSecondary;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontSize: 11.5,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-          ),
+
+    // 3. Envolvido com InkWell para torná-lo clicável
+    return InkWell( 
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 11.5,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
