@@ -134,4 +134,21 @@ class ApiService {
 
     return jsonDecode(response.body);
   }
+
+  static Future<List<dynamic>> getProfissionais({
+    required int servicoId,
+  }) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/profissionais/servico/$servicoId'),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Não foi possível buscar os profissionais');
+    }
+
+    return jsonDecode(response.body) as List<dynamic>;
+  }
 }
+
+
+
