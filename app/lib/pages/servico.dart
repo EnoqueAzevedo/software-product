@@ -34,7 +34,15 @@ const List<String> _meses = [
   'dezembro',
 ];
 
-const List<String> _diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+const List<String> _diasSemana = [
+  'Seg',
+  'Ter',
+  'Qua',
+  'Qui',
+  'Sex',
+  'Sáb',
+  'Dom',
+];
 
 // "15 de outubro de 2026"
 String _dataExtenso(DateTime d) =>
@@ -142,7 +150,8 @@ class _ServicoScreenState extends State<ServicoScreen> {
       (context) => _SheetLista(
         titulo: 'Escolha o serviço',
         mensagemVazia: 'Nenhum serviço disponível.',
-        carregar: () async => List<dynamic>.from(await ApiService.getServicos()),
+        carregar: () async =>
+            List<dynamic>.from(await ApiService.getServicos()),
         itemBuilder: (item, aoSelecionar) =>
             _ServicoTile(servico: item, onTap: aoSelecionar),
       ),
@@ -154,14 +163,19 @@ class _ServicoScreenState extends State<ServicoScreen> {
     _buscarHorarios();
   }
 
-  // Abre a lista de profissionais (buscada no banco a cada abertura)
+  // Abre a lista de profissionais que atendem ao serviço selecionado
   Future<void> _selecionarProfissional() async {
+    if (_servico == null) return;
+
     final escolhido = await _abrirSheet<dynamic>(
       (context) => _SheetLista(
         titulo: 'Escolha o profissional',
         mensagemVazia: 'Nenhum profissional disponível.',
-        carregar: () async =>
-            List<dynamic>.from(await ApiService.getProfissionais()),
+        carregar: () async => List<dynamic>.from(
+          await ApiService.getProfissionais(
+            servicoId: (_servico['id'] as num).toInt(),
+          ),
+        ),
         itemBuilder: (item, aoSelecionar) =>
             _ProfissionalTile(profissional: item, onTap: aoSelecionar),
       ),
@@ -217,10 +231,9 @@ class _ServicoScreenState extends State<ServicoScreen> {
       if (!mounted || id != _buscaId) return;
 
       setState(() {
-        _horarios = List<dynamic>.from(dados)
-            .map(_paraHorario)
-            .where((h) => h.hora.isNotEmpty)
-            .toList();
+        _horarios = List<dynamic>.from(
+          dados,
+        ).map(_paraHorario).where((h) => h.hora.isNotEmpty).toList();
         _carregandoHorarios = false;
       });
     } catch (e) {
@@ -312,7 +325,8 @@ class _ServicoScreenState extends State<ServicoScreen> {
                             Align(
                               alignment: Alignment.centerLeft,
                               child: IconButton(
-                                onPressed: () => Navigator.of(context).maybePop(),
+                                onPressed: () =>
+                                    Navigator.of(context).maybePop(),
                                 icon: const Icon(
                                   Icons.arrow_back_ios_new_rounded,
                                   size: 20,
@@ -341,7 +355,8 @@ class _ServicoScreenState extends State<ServicoScreen> {
                               child: _servico == null
                                   ? const _Placeholder('Selecione o serviço')
                                   : Text(
-                                      (_servico['nome'] ?? 'Serviço').toString(),
+                                      (_servico['nome'] ?? 'Serviço')
+                                          .toString(),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -357,7 +372,9 @@ class _ServicoScreenState extends State<ServicoScreen> {
                             _CampoSelecao(
                               onTap: _selecionarProfissional,
                               child: _profissional == null
-                                  ? const _Placeholder('Selecione o profissional')
+                                  ? const _Placeholder(
+                                      'Selecione o profissional',
+                                    )
                                   : Row(
                                       children: [
                                         _Avatar(
@@ -540,7 +557,9 @@ class _ServicoScreenState extends State<ServicoScreen> {
     if (_carregandoHorarios) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-        child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.accent),
+        ),
       );
     }
 
@@ -549,7 +568,10 @@ class _ServicoScreenState extends State<ServicoScreen> {
     }
 
     if (_horarios.isEmpty) {
-      return const Text('Nenhum horário disponível nesta data.', style: estiloDica);
+      return const Text(
+        'Nenhum horário disponível nesta data.',
+        style: estiloDica,
+      );
     }
 
     // 3 colunas no celular, 4 em telas mais largas
@@ -557,7 +579,8 @@ class _ServicoScreenState extends State<ServicoScreen> {
       builder: (context, constraints) {
         const espaco = 10.0;
         final colunas = constraints.maxWidth >= 480 ? 4 : 3;
-        final largura = (constraints.maxWidth - espaco * (colunas - 1)) / colunas;
+        final largura =
+            (constraints.maxWidth - espaco * (colunas - 1)) / colunas;
 
         return Wrap(
           spacing: espaco,
@@ -705,7 +728,11 @@ class _HorarioChip extends StatelessWidget {
 
 // Foto redonda do profissional (com a inicial se não houver foto)
 class _Avatar extends StatelessWidget {
-  const _Avatar({required this.url, required this.nome, required this.diametro});
+  const _Avatar({
+    required this.url,
+    required this.nome,
+    required this.diametro,
+  });
 
   final String url;
   final String nome;
@@ -1125,7 +1152,10 @@ class _CalendarioSheetState extends State<_CalendarioSheet> {
     final agora = DateTime.now();
     _hoje = DateTime(agora.year, agora.month, agora.day);
     _primeiroMes = DateTime(_hoje.year, _hoje.month);
-    _ultimoMes = DateTime(_hoje.year, _hoje.month + 12); // até 12 meses à frente
+    _ultimoMes = DateTime(
+      _hoje.year,
+      _hoje.month + 12,
+    ); // até 12 meses à frente
 
     final base = widget.selecionada ?? _hoje;
     _mes = DateTime(base.year, base.month);

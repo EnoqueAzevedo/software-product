@@ -5,14 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   // URL pública do backend
-  static const String baseUrl =
-      'https://agenda-pulcro-api.onrender.com';
+  static const String baseUrl = 'https://agenda-pulcro-api.onrender.com';
 
   // Testa a conexão com a API
   static Future<String> testarConexao() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/'),
-    );
+    final response = await http.get(Uri.parse('$baseUrl/'));
 
     if (response.statusCode != 200) {
       throw Exception('API indisponível');
@@ -30,9 +27,7 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/register'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'nome': nome,
         'email': email,
@@ -44,10 +39,7 @@ class ApiService {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final data = jsonDecode(response.body);
 
-      throw Exception(
-        data['detail'] ??
-            'Não foi possível realizar o cadastro',
-      );
+      throw Exception(data['detail'] ?? 'Não foi possível realizar o cadastro');
     }
 
     final data = jsonDecode(response.body);
@@ -55,20 +47,15 @@ class ApiService {
     return data['mensagem'];
   }
 
-  // Faz login e salva o token
+  // Faz login e salva o token de autenticação
   static Future<String> login({
     required String email,
     required String senha,
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/users/login'),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: {
-        'username': email,
-        'password': senha,
-      },
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {'username': email, 'password': senha},
     );
 
     if (response.statusCode != 200) {
@@ -76,15 +63,11 @@ class ApiService {
     }
 
     final data = jsonDecode(response.body);
-
     final token = data['access_token'];
 
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setString(
-      'access_token',
-      token,
-    );
+    await prefs.setString('access_token', token);
 
     return token;
   }
@@ -96,7 +79,7 @@ class ApiService {
     return prefs.getString('access_token');
   }
 
-  // Busca os dados do usuário logado
+  // Busca os dados do usuário autenticado
   static Future<String> getMe() async {
     final token = await getToken();
 
@@ -106,15 +89,11 @@ class ApiService {
 
     final response = await http.get(
       Uri.parse('$baseUrl/users/me'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode != 200) {
-      throw Exception(
-        'Não foi possível buscar o usuário',
-      );
+      throw Exception('Não foi possível buscar o usuário');
     }
 
     return response.body;
@@ -122,19 +101,16 @@ class ApiService {
 
   // Busca os serviços cadastrados
   static Future<List<dynamic>> getServicos() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/servicos/'),
-    );
+    final response = await http.get(Uri.parse('$baseUrl/servicos/'));
 
     if (response.statusCode != 200) {
-      throw Exception(
-        'Não foi possível buscar os serviços',
-      );
+      throw Exception('Não foi possível buscar os serviços');
     }
 
-    return jsonDecode(response.body);
+    return jsonDecode(response.body) as List<dynamic>;
   }
 
+  // Busca os profissionais que realizam o serviço selecionado
   static Future<List<dynamic>> getProfissionais({
     required int servicoId,
   }) async {
@@ -148,7 +124,72 @@ class ApiService {
 
     return jsonDecode(response.body) as List<dynamic>;
   }
+
+  // Busca os horários disponíveis para serviço,
+  // profissional e data selecionados
+  static Future<List<dynamic>> getHorarios({
+    required int servicoId,
+    required int profissionalId,
+    required String data,
+  }) async {
+    final uri = Uri.parse('$baseUrl/agendamentos/horarios').replace(
+      queryParameters: {
+        'servico_id': servicoId.toString(),
+        'profissional_id': profissionalId.toString(),
+        'data': data,
+      },
+    );
+
+    final response = await http.get(uri);
+
+    if (response.statusCode != 200) {
+      throw Exception('Não foi possível buscar os horários disponíveis');
+    }
+
+    return jsonDecode(response.body) as List<dynamic>;
+  }
+
+  // Cria um agendamento
+  static Future<void> criarAgendamento({
+    required int servicoId,
+    required int profissionalId,
+    required String data,
+    required String horario,
+  }) async {
+    final token = await getToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception('Usuário não está autenticado');
+    }
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/agendamentos/'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'servico_id': servicoId,
+        'profissional_id': profissionalId,
+        'data_agendamento': data,
+        'horario_inicio': horario,
+      }),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      String mensagem = 'Não foi possível confirmar o agendamento';
+
+      try {
+        final resposta = jsonDecode(response.body);
+
+        if (resposta is Map && resposta['detail'] != null) {
+          mensagem = resposta['detail'].toString();
+        }
+      } catch (_) {
+        // Mantém a mensagem padrão se a resposta não for JSON.
+      }
+
+      throw Exception(mensagem);
+    }
+  }
 }
-
-
-

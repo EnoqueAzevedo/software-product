@@ -1,7 +1,15 @@
 
 from datetime import date, datetime, time
 
-from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, Time, Text
+from sqlalchemy import (
+    BigInteger,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Time,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db.session import Base
@@ -41,6 +49,11 @@ class Agendamento(Base):
 
     horario_inicio: Mapped[time] = mapped_column(
         Time,
+        nullable=False,
+    )
+
+    duracao_minutos: Mapped[int] = mapped_column(
+        Integer,
         nullable=False,
     )
 
