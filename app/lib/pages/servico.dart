@@ -164,41 +164,31 @@ class _ServicoScreenState extends State<ServicoScreen> {
   }
 
   // Abre a lista de profissionais que atendem ao serviço selecionado
-  Future<void> _selecionarProfissional() async {
-    if (_servico == null) return;
+Future<void> _selecionarProfissional() async {
+  if (_servico == null) return;
 
-    final escolhido = await _abrirSheet<dynamic>(
-      (context) => _SheetLista(
-        titulo: 'Escolha o profissional',
-        mensagemVazia: 'Nenhum profissional disponível.',
-        carregar: () async {
-          final profissionais = List<dynamic>.from(
-            await ApiService.getProfissionais(
-              servicoId: (_servico['id'] as num).toInt(),
-            ),
-          );
-
-          print('DADOS RECEBIDOS: $profissionais');
-
-          if (profissionais.isNotEmpty) {
-            print(
-              'ESPECIALIDADE: '
-              '${profissionais.first['especialidade']}',
-            );
-          }
-
-          return profissionais;
-        },
-        itemBuilder: (item, aoSelecionar) =>
-            _ProfissionalTile(profissional: item, onTap: aoSelecionar),
+  final escolhido = await _abrirSheet<dynamic>(
+    (context) => _SheetLista(
+      titulo: 'Escolha o profissional',
+      mensagemVazia: 'Nenhum profissional disponível.',
+      carregar: () async => List<dynamic>.from(
+        await ApiService.getProfissionais(
+          servicoId: (_servico['id'] as num).toInt(),
+        ),
       ),
-    );
+      itemBuilder: (item, aoSelecionar) => _ProfissionalTile(
+        profissional: item,
+        onTap: aoSelecionar,
+      ),
+    ),
+  );
 
-    if (escolhido == null || !mounted) return;
+  if (escolhido == null || !mounted) return;
 
-    setState(() => _profissional = escolhido);
-    _buscarHorarios();
-  }
+  setState(() => _profissional = escolhido);
+  _buscarHorarios();
+}
+
 
   // Abre o calendário
   Future<void> _selecionarData() async {
