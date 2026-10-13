@@ -171,11 +171,24 @@ class _ServicoScreenState extends State<ServicoScreen> {
       (context) => _SheetLista(
         titulo: 'Escolha o profissional',
         mensagemVazia: 'Nenhum profissional disponível.',
-        carregar: () async => List<dynamic>.from(
-          await ApiService.getProfissionais(
-            servicoId: (_servico['id'] as num).toInt(),
-          ),
-        ),
+        carregar: () async {
+          final profissionais = List<dynamic>.from(
+            await ApiService.getProfissionais(
+              servicoId: (_servico['id'] as num).toInt(),
+            ),
+          );
+
+          print('DADOS RECEBIDOS: $profissionais');
+
+          if (profissionais.isNotEmpty) {
+            print(
+              'ESPECIALIDADE: '
+              '${profissionais.first['especialidade']}',
+            );
+          }
+
+          return profissionais;
+        },
         itemBuilder: (item, aoSelecionar) =>
             _ProfissionalTile(profissional: item, onTap: aoSelecionar),
       ),
