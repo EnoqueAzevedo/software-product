@@ -7,6 +7,11 @@ class ApiService {
   // URL pública do backend
   static const String baseUrl = 'https://agenda-pulcro-api.onrender.com';
 
+  // Decodifica corretamente as respostas da API como UTF-8.
+  static String _decodificarResposta(http.Response response) {
+    return utf8.decode(response.bodyBytes);
+  }
+
   // Testa a conexão com a API
   static Future<String> testarConexao() async {
     final response = await http.get(Uri.parse('$baseUrl/'));
@@ -15,7 +20,7 @@ class ApiService {
       throw Exception('API indisponível');
     }
 
-    return response.body;
+    return _decodificarResposta(response);
   }
 
   // Cria um cadastro provisório
@@ -27,7 +32,7 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/register'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json; charset=utf-8'},
       body: jsonEncode({
         'nome': nome,
         'email': email,
@@ -36,13 +41,21 @@ class ApiService {
       }),
     );
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final data = jsonDecode(response.body);
+    final resposta = _decodificarResposta(response);
 
-      throw Exception(data['detail'] ?? 'Não foi possível realizar o cadastro');
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      try {
+        final data = jsonDecode(resposta);
+
+        throw Exception(
+          data['detail'] ?? 'Não foi possível realizar o cadastro',
+        );
+      } on FormatException {
+        throw Exception('Não foi possível realizar o cadastro');
+      }
     }
 
-    final data = jsonDecode(response.body);
+    final data = jsonDecode(resposta);
 
     return data['mensagem'];
   }
@@ -62,8 +75,8 @@ class ApiService {
       throw Exception('Email ou senha inválidos');
     }
 
-    final data = jsonDecode(response.body);
-    final token = data['access_token'];
+    final data = jsonDecode(_decodificarResposta(response));
+    final token = data['access_token'] as String;
 
     final prefs = await SharedPreferences.getInstance();
 
@@ -96,7 +109,7 @@ class ApiService {
       throw Exception('Não foi possível buscar o usuário');
     }
 
-    return response.body;
+    return _decodificarResposta(response);
   }
 
   // Busca os serviços cadastrados
@@ -107,7 +120,7 @@ class ApiService {
       throw Exception('Não foi possível buscar os serviços');
     }
 
-    return jsonDecode(response.body) as List<dynamic>;
+    return jsonDecode(_decodificarResposta(response)) as List<dynamic>;
   }
 
   // Busca os profissionais que realizam o serviço selecionado
@@ -122,7 +135,7 @@ class ApiService {
       throw Exception('Não foi possível buscar os profissionais');
     }
 
-    return jsonDecode(response.body) as List<dynamic>;
+    return jsonDecode(_decodificarResposta(response)) as List<dynamic>;
   }
 
   // Busca os horários disponíveis para serviço,
@@ -146,7 +159,7 @@ class ApiService {
       throw Exception('Não foi possível buscar os horários disponíveis');
     }
 
-    return jsonDecode(response.body) as List<dynamic>;
+    return jsonDecode(_decodificarResposta(response)) as List<dynamic>;
   }
 
   // Cria um agendamento
@@ -165,7 +178,7 @@ class ApiService {
     final response = await http.post(
       Uri.parse('$baseUrl/agendamentos/'),
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
@@ -180,10 +193,11 @@ class ApiService {
       String mensagem = 'Não foi possível confirmar o agendamento';
 
       try {
-        final resposta = jsonDecode(response.body);
+        final resposta = _decodificarResposta(response);
+        final data = jsonDecode(resposta);
 
-        if (resposta is Map && resposta['detail'] != null) {
-          mensagem = resposta['detail'].toString();
+        if (data is Map && data['detail'] != null) {
+          mensagem = data['detail'].toString();
         }
       } catch (_) {
         // Mantém a mensagem padrão se a resposta não for JSON.
