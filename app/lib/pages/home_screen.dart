@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-import 'servico.dart';
+import 'meus_agendamentos.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
@@ -525,10 +525,14 @@ class _ServiceCard extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     ElevatedButton(
-                      onPressed: () { //chama a pagina servico
+                      onPressed: () {
+                        //chama a pagina servico
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const ServicoScreen()), // Nome da classe dentro de servico.dart
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const MeusAgendamentosScreen(),
+                          ), // Nome da classe dentro de servico.dart // Alterador para meus agendamentos
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -615,7 +619,9 @@ class _BottomNavBar extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ServicoScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const MeusAgendamentosScreen(),
+                    ),
                   );
                 },
               ),
@@ -649,9 +655,8 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = selected ? AppColors.accentDark : AppColors.textSecondary;
 
-
     // 3. Envolvido com InkWell para torná-lo clicável
-    return InkWell( 
+    return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
