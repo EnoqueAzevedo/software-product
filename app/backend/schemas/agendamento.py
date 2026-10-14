@@ -1,4 +1,3 @@
-
 from datetime import date, time
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -24,3 +23,18 @@ class AgendamentoResponse(BaseModel):
     status: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# Agendamento com os nomes do serviço e do profissional
+# (usado na tela "Meus Agendamentos" do app)
+class AgendamentoDetalhe(BaseModel):
+    id: int
+    servico_id: int
+    servico_nome: str
+    imagem_url: str | None = None
+    profissional_id: int
+    profissional_nome: str
+    data: date
+    horario: time
+    duracao_minutos: int
+    status: str

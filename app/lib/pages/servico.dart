@@ -3,20 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
-// Tela "Agendar Horário".
-//
-// Os dados vêm do banco através do ApiService. Esta tela espera estes métodos:
-//
-//   ApiService.getServicos()        -> List  (já existe; usa id, nome, descricao,
-//                                             preco, duracao, imagem_url)
-//   ApiService.getProfissionais()   -> List  (id, nome, especialidade, foto_url)
-//   ApiService.getHorarios(servicoId:, profissionalId:, data: 'AAAA-MM-DD')
-//                                   -> List  (["09:00", ...] ou
-//                                             [{"hora": "09:00", "disponivel": true}])
-//   ApiService.criarAgendamento(servicoId:, profissionalId:, data:, horario:)
-//                                   -> Future<void> (lança exceção se falhar)
 
-// Largura máxima do conteúdo em telas largas
 const double _larguraMaxima = 560;
 
 const List<String> _meses = [
@@ -73,6 +60,18 @@ String _formatarPreco(dynamic valor) {
       : double.tryParse('$valor'.replaceAll(',', '.')) ?? 0.0;
 
   return 'R\$ ${numero.toStringAsFixed(2).replaceAll('.', ',')}';
+}
+
+// Mensagens vindas da API (ex.: "Este horário não está mais disponível.") são
+// mostradas ao usuário; erros de rede ou inesperados usam a mensagem padrão
+String _mensagemDeErro(Object erro, String padrao) {
+  final texto = erro.toString();
+
+  if (texto.startsWith('Exception: ')) {
+    return texto.substring('Exception: '.length);
+  }
+
+  return padrao;
 }
 
 class _Horario {
@@ -159,7 +158,15 @@ class _ServicoScreenState extends State<ServicoScreen> {
 
     if (escolhido == null || !mounted) return;
 
-    setState(() => _servico = escolhido);
+    setState(() {
+      // A lista de profissionais depende do serviço: ao trocar de serviço,
+      // o profissional escolhido antes deixa de valer
+      if (_servico != null && _servico['id'] != escolhido['id']) {
+        _profissional = null;
+      }
+
+      _servico = escolhido;
+    });
     _buscarHorarios();
   }
 
@@ -282,11 +289,16 @@ Future<void> _selecionarProfissional() async {
       debugPrint('ERRO AO CONFIRMAR AGENDAMENTO: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Não foi possível confirmar. Tente novamente.'),
+        SnackBar(
+          content: Text(
+            _mensagemDeErro(e, 'Não foi possível confirmar. Tente novamente.'),
+          ),
           backgroundColor: AppColors.accentDark,
         ),
       );
+
+      // O horário pode ter sido ocupado por outra pessoa: atualiza a lista
+      _buscarHorarios();
     }
   }
 

@@ -206,4 +206,62 @@ class ApiService {
       throw Exception(mensagem);
     }
   }
+
+  // Monta o cabeçalho com o token do usuário autenticado
+  static Future<Map<String, String>> _cabecalhoAutenticado() async {
+    final token = await getToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception('Usuário não está autenticado');
+    }
+
+    return {'Authorization': 'Bearer $token'};
+  }
+
+  // Busca os agendamentos futuros do usuário autenticado
+  static Future<List<dynamic>> getAgendamentosProximos() {
+    return _getAgendamentos('proximos');
+  }
+
+  // Busca os agendamentos passados do usuário autenticado
+  static Future<List<dynamic>> getAgendamentosHistorico() {
+    return _getAgendamentos('historico');
+  }
+
+  static Future<List<dynamic>> _getAgendamentos(String tipo) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/agendamentos/$tipo'),
+      headers: await _cabecalhoAutenticado(),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Não foi possível buscar os agendamentos');
+    }
+
+    return jsonDecode(_decodificarResposta(response)) as List<dynamic>;
+  }
+
+  // Cancela um agendamento do usuário autenticado (remove do banco)
+  static Future<void> cancelarAgendamento(int agendamentoId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/agendamentos/$agendamentoId'),
+      headers: await _cabecalhoAutenticado(),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      String mensagem = 'Não foi possível cancelar o agendamento';
+
+      try {
+        final data = jsonDecode(_decodificarResposta(response));
+
+        if (data is Map && data['detail'] != null) {
+          mensagem = data['detail'].toString();
+        }
+      } catch (_) {
+        // Mantém a mensagem padrão se a resposta não for JSON.
+      }
+
+      throw Exception(mensagem);
+    }
+  }
 }
