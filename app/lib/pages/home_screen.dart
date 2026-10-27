@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-
+import 'perfil.dart';
 import 'meus_agendamentos.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
@@ -625,9 +625,16 @@ class _BottomNavBar extends StatelessWidget {
                   );
                 },
               ),
-              const _NavItem(
+              _NavItem(
                 icon: Icons.person_outline_rounded,
                 label: 'Perfil',
+                onTap: () {
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) =>const PerfilScreen()
+                    ),
+                  );
+                },
               ),
             ],
           ),

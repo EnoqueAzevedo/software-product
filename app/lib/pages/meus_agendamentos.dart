@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
+import 'perfil.dart';
 import 'servico.dart';
 
 // Tela "Meus Agendamentos".
@@ -945,9 +945,17 @@ class _BottomNavBar extends StatelessWidget {
                 label: 'Agenda',
                 selected: true,
               ),
-              const _NavItem(
+              _NavItem(
                 icon: Icons.person_outline_rounded,
                 label: 'Perfil',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PerfilScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
