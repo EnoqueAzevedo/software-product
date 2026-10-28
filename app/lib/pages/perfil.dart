@@ -1,6 +1,4 @@
 
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,6 +9,7 @@ import 'home_screen.dart';
 import 'meus_agendamentos.dart';
 import 'servico.dart';
 
+const double _larguraMaximaPerfil = 720;
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -155,103 +154,127 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Column(
-                  children: [
-                    Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 60,
-                          backgroundColor: Colors.grey.shade300,
-                          backgroundImage: _fotoBytes != null
-                              ? MemoryImage(_fotoBytes!)
-                              : null,
-                          child: _fotoBytes == null
-                              ? const Icon(
-                                  Icons.person,
-                                  size: 65,
-                                  color: Colors.white,
-                                )
-                              : null,
+    final mediaQuery = MediaQuery.of(context);
+
+    return MediaQuery(
+      // Mantém o mesmo limite de escala de texto utilizado na Home.
+      data: mediaQuery.copyWith(
+        textScaler: mediaQuery.textScaler.clamp(maxScaleFactor: 1.3),
+      ),
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Center(
+                    // Em telas largas, limita e centraliza o conteúdo do Perfil,
+                    // como acontece no HomeScreen.
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: _larguraMaximaPerfil,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md,
+                          24,
+                          AppSpacing.md,
+                          24,
                         ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: Material(
-                            color: AppColors.cardBackground,
-                            shape: const CircleBorder(),
-                            child: IconButton(
-                              tooltip: 'Alterar foto',
-                              onPressed: _abrirOpcoesFoto,
-                              icon: const Icon(
-                                Icons.edit_outlined,
-                                color: Colors.pink,
-                                size: 20,
+                        child: Column(
+                          children: [
+                            Stack(
+                              children: [
+                                CircleAvatar(
+                                  radius: 60,
+                                  backgroundColor: Colors.grey.shade300,
+                                  backgroundImage: _fotoBytes != null
+                                      ? MemoryImage(_fotoBytes!)
+                                      : null,
+                                  child: _fotoBytes == null
+                                      ? const Icon(
+                                          Icons.person,
+                                          size: 65,
+                                          color: Colors.white,
+                                        )
+                                      : null,
+                                ),
+                                Positioned(
+                                  right: 0,
+                                  bottom: 0,
+                                  child: Material(
+                                    color: AppColors.cardBackground,
+                                    shape: const CircleBorder(),
+                                    child: IconButton(
+                                      tooltip: 'Alterar foto',
+                                      onPressed: _abrirOpcoesFoto,
+                                      icon: const Icon(
+                                        Icons.edit_outlined,
+                                        color: Colors.pink,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            const Text(
+                              'Enoque',
+                              style: TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Enoque',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 36),
-                    _itemMenu(
-                      icone: Icons.account_circle_outlined,
-                      titulo: 'Meus dados',
-                    ),
-                    _itemMenu(
-                      icone: Icons.calendar_month_outlined,
-                      titulo: 'Meus Horários',
-                    ),
-                    _itemMenu(
-                      icone: Icons.favorite_border,
-                      titulo: 'Favoritos',
-                    ),
-                    _itemMenu(
-                      icone: Icons.local_offer_outlined,
-                      titulo: 'Cupons',
-                    ),
-                    _itemMenu(
-                      icone: Icons.help_outline,
-                      titulo: 'Ajuda e Suporte',
-                    ),
-                    const SizedBox(height: 48),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: OutlinedButton(
-                        onPressed: () {
-                          // Implementar o encerramento da sessão.
-                        },
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 48),
-                          foregroundColor: Colors.purple,
-                          side: const BorderSide(color: Colors.purple),
-                        ),
-                        child: const Text(
-                          'Sair',
-                          style: TextStyle(fontSize: 18),
+                            const SizedBox(height: 36),
+                            _itemMenu(
+                              icone: Icons.account_circle_outlined,
+                              titulo: 'Meus dados',
+                            ),
+                            _itemMenu(
+                              icone: Icons.calendar_month_outlined,
+                              titulo: 'Meus Horários',
+                            ),
+                            _itemMenu(
+                              icone: Icons.favorite_border,
+                              titulo: 'Favoritos',
+                            ),
+                            _itemMenu(
+                              icone: Icons.local_offer_outlined,
+                              titulo: 'Cupons',
+                            ),
+                            _itemMenu(
+                              icone: Icons.help_outline,
+                              titulo: 'Ajuda e Suporte',
+                            ),
+                            const SizedBox(height: 48),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  // Implementar o encerramento da sessão.
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size(double.infinity, 48),
+                                  foregroundColor: Colors.purple,
+                                  side: const BorderSide(color: Colors.purple),
+                                ),
+                                child: const Text(
+                                  'Sair',
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-            const _BottomNavBar(),
-          ],
+              const _BottomNavBar(),
+            ],
+          ),
         ),
       ),
     );
