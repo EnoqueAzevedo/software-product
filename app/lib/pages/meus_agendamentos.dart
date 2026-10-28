@@ -151,17 +151,14 @@ class _MeusAgendamentosScreenState extends State<MeusAgendamentosScreen> {
     _carregar(aba);
   }
 
-  // Seta de voltar: volta para a home
-  void _voltar() {
-    final navigator = Navigator.of(context);
-
-    if (navigator.canPop()) {
-      navigator.pop();
-    } else {
-      navigator.pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    }
+  // ir para tela iniciar
+  void _irParaInicio() {
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => const HomeScreen(),
+      ),
+      (route) => false,
+    );
   }
 
   // Abre servico.dart; se o usuário agendar, recarrega a lista
@@ -298,20 +295,6 @@ class _MeusAgendamentosScreenState extends State<MeusAgendamentosScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: IconButton(
-                                  onPressed: _voltar,
-                                  icon: const Icon(
-                                    Icons.arrow_back_ios_new_rounded,
-                                    size: 20,
-                                  ),
-                                  color: AppColors.textPrimary,
-                                  padding: EdgeInsets.zero,
-                                  visualDensity: VisualDensity.compact,
-                                ),
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
                               Row(
                                 children: [
                                   Expanded(
@@ -362,7 +345,7 @@ class _MeusAgendamentosScreenState extends State<MeusAgendamentosScreen> {
                   ),
                 ),
               ),
-              _BottomNavBar(onInicio: _voltar, onNovo: _novoAgendamento),
+              _BottomNavBar(onInicio: _irParaInicio, onNovo: _novoAgendamento),
             ],
           ),
         ),
