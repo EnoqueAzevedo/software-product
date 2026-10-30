@@ -1,8 +1,8 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
@@ -57,9 +57,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
       if (foto == null || !mounted) return;
 
-      final bytes = await foto.readAsBytes();
+      final bytes = await _recortarImagem(foto.path);
 
-      if (!mounted) return;
+      if (bytes == null || !mounted) return;
 
       setState(() {
         _fotoBytes = bytes;
@@ -70,6 +70,32 @@ class _PerfilScreenState extends State<PerfilScreen> {
       debugPrint('Erro ao capturar foto: $e');
     }
   }
+
+  Future<Uint8List?> _recortarImagem(String caminho) async {
+    final imagemRecortada = await ImageCropper().cropImage(
+      sourcePath: caminho,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Recortar imagem',
+          toolbarColor: Colors.purple,
+          toolbarWidgetColor: Colors.white,
+          lockAspectRatio: false,
+        ),
+          IOSUiSettings(
+            title: 'Recortar imagem'
+          ),
+
+          WebUiSettings(
+            context: context,
+          ),
+      ],
+    );
+
+    if (imagemRecortada == null) return null;
+
+    return await imagemRecortada.readAsBytes();
+  }
+
 
   void _mostrarMensagem(String mensagem) {
     ScaffoldMessenger.of(context).showSnackBar(
