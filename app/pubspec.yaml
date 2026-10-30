@@ -34,7 +34,6 @@ dependencies:
     sdk: flutter
   file_picker: ^10.3.10 # Verifique a versão mais recente no pub.dev
   cupertino_icons: ^1.0.8
-  image_picker: ^1.2.3
   http: 1.2.2 #manda e recebe dados da internet, tipo Api
   flutter_riverpod: 2.6.1 #ele gerenciar os dados e mudacas nas telas
   shared_preferences: ^2.5.5

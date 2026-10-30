@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 import '../theme/app_theme.dart';
@@ -26,53 +25,37 @@ class _PerfilScreenState extends State<PerfilScreen> {
       (defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS);
 
-  Future<void> _selecionarGaleria() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: false,
-      withData: true,
-    );
 
-    if (!mounted || result == null) return;
+  // O cropper funciona na web, no Android e no iOS (não existe para desktop).
+  bool get _suportaRecorte => kIsWeb || _isMobile;
 
-    final bytes = result.files.single.bytes;
-
-    if (bytes == null) {
-      _mostrarMensagem('Não foi possível carregar a imagem.');
-      return;
-    }
-
-    setState(() {
-      _fotoBytes = bytes;
-    });
-  }
-
-  Future<void> _tirarFoto() async {
+  Future<void> _escolherImagem(ImageSource origem) async {
     try {
-      final foto = await ImagePicker().pickImage(
-        source: ImageSource.camera,
+      final imagem = await ImagePicker().pickImage(
+        source: origem,
         imageQuality: 85,
         maxWidth: 1200,
       );
 
-      if (foto == null || !mounted) return;
+      if (imagem == null || !mounted) return;
 
-      final bytes = await _recortarImagem(foto.path);
+      // No desktop não há recorte: usa a imagem inteira.
+      final Uint8List? bytes = _suportaRecorte
+          ? await _recortarImagem(imagem.path)
+          : await imagem.readAsBytes();
 
       if (bytes == null || !mounted) return;
 
-      setState(() {
-        _fotoBytes = bytes;
-      });
+      setState(() => _fotoBytes = bytes);
     } catch (e) {
       if (!mounted) return;
-      _mostrarMensagem('Não foi possível acessar a câmera.');
-      debugPrint('Erro ao capturar foto: $e');
+      _mostrarMensagem('Não foi possível carregar a imagem.');
+      debugPrint('Erro ao escolher imagem: $e');
     }
   }
 
   Future<Uint8List?> _recortarImagem(String caminho) async {
-    final imagemRecortada = await ImageCropper().cropImage(
+    final recortada = await ImageCropper().cropImage(
       sourcePath: caminho,
       uiSettings: [
         AndroidUiSettings(
@@ -81,21 +64,17 @@ class _PerfilScreenState extends State<PerfilScreen> {
           toolbarWidgetColor: Colors.white,
           lockAspectRatio: false,
         ),
-          IOSUiSettings(
-            title: 'Recortar imagem'
-          ),
-
-          WebUiSettings(
-            context: context,
-          ),
+        IOSUiSettings(title: 'Recortar imagem'),
+        WebUiSettings(context: context),
       ],
     );
 
-    if (imagemRecortada == null) return null;
+    if (recortada == null) return null; // usuário cancelou
 
-    return await imagemRecortada.readAsBytes();
+    return recortada.readAsBytes(); // funciona também na web
   }
 
+  
 
   void _mostrarMensagem(String mensagem) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -115,13 +94,11 @@ class _PerfilScreenState extends State<PerfilScreen> {
               children: [
                 if (_isMobile)
                   ListTile(
-                    leading: const Icon(
-                      Icons.photo_camera_outlined,
-                    ),
+                    leading: const Icon(Icons.photo_camera_outlined),
                     title: const Text('Câmera'),
                     onTap: () {
                       Navigator.pop(sheetContext);
-                      _tirarFoto();
+                      _escolherImagem(ImageSource.camera);
                     },
                   ),
                 ListTile(
@@ -129,7 +106,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   title: const Text('Galeria'),
                   onTap: () {
                     Navigator.pop(sheetContext);
-                    _selecionarGaleria();
+                    _escolherImagem(ImageSource.gallery);
                   },
                 ),
                 ListTile(
@@ -137,9 +114,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   title: const Text('Remover foto'),
                   onTap: () {
                     Navigator.pop(sheetContext);
-                    setState(() {
-                      _fotoBytes = null;
-                    });
+                    setState(() => _fotoBytes = null);
                   },
                 ),
               ],
