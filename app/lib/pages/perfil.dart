@@ -57,24 +57,43 @@ class _PerfilScreenState extends State<PerfilScreen> {
   Future<Uint8List?> _recortarImagem(String caminho) async {
     final recortada = await ImageCropper().cropImage(
       sourcePath: caminho,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1), // quadrado
+      maxWidth: 800,
+      maxHeight: 800,
+      compressFormat: ImageCompressFormat.jpg,
+      compressQuality: 90,
       uiSettings: [
         AndroidUiSettings(
-          toolbarTitle: 'Recortar imagem',
-          toolbarColor: Colors.purple,
+          toolbarTitle: '',
+          toolbarColor: const Color(0xFF0B141A),
           toolbarWidgetColor: Colors.white,
-          lockAspectRatio: false,
+          backgroundColor: const Color(0xFF0B141A),
+          activeControlsWidgetColor: const Color(0xFF25D366),
+          cropFrameColor: Colors.white,
+          cropGridColor: Colors.white54,
+          showCropGrid: true,
+          hideBottomControls: false, // mantém o botão de girar
+          lockAspectRatio: true,
+          initAspectRatio: CropAspectRatioPreset.square,
         ),
-        IOSUiSettings(title: 'Recortar imagem'),
+        IOSUiSettings(
+          title: '',
+          doneButtonTitle: 'OK',
+          cancelButtonTitle: 'Cancelar',
+          aspectRatioLockEnabled: true,
+          resetAspectRatioEnabled: false,
+          aspectRatioPickerButtonHidden: true,
+        ),
         WebUiSettings(context: context),
       ],
     );
 
     if (recortada == null) return null; // usuário cancelou
 
-    return recortada.readAsBytes(); // funciona também na web
+    // Funciona também na web (não depende de dart:io File).
+    return recortada.readAsBytes();
   }
 
-  
 
   void _mostrarMensagem(String mensagem) {
     ScaffoldMessenger.of(context).showSnackBar(
