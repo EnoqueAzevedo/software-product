@@ -74,8 +74,8 @@ class _RecortarFotoScreenState extends State<RecortarFotoScreen> {
                     key: ValueKey(_versao),
                     image: _bytes,
                     controller: _controller,
-                    aspectRatio: 1, // quadrado, como no WhatsApp
-                    interactive: true, // permite mover e dar zoom na imagem
+                    aspectRatio: 1, // quadrado,
+                    interactive: false, // nao permite mover e dar zoom na imagem
                     baseColor: _fundo,
                     maskColor: Colors.black.withValues(alpha: 0.6),
                     initialRectBuilder: InitialRectBuilder.withSizeAndRatio(
