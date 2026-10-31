@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
 
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
 import 'meus_agendamentos.dart';
 import 'servico.dart';
+import 'recortar_foto_screen.dart';
 
 const double _larguraMaximaPerfil = 720;
 
@@ -26,8 +26,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
           defaultTargetPlatform == TargetPlatform.iOS);
 
 
-  // O cropper funciona na web, no Android e no iOS (não existe para desktop).
-  bool get _suportaRecorte => kIsWeb || _isMobile;
 
   Future<void> _escolherImagem(ImageSource origem) async {
     try {
@@ -39,10 +37,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
       if (imagem == null || !mounted) return;
 
-      // No desktop não há recorte: usa a imagem inteira.
-      final Uint8List? bytes = _suportaRecorte
-          ? await _recortarImagem(imagem.path)
-          : await imagem.readAsBytes();
+      // Lê a imagem e abre a tela de enquadramento (web, Android e iOS).
+      final original = await imagem.readAsBytes();
+      if (!mounted) return;
+
+      final Uint8List? bytes =
+          await RecortarFotoScreen.abrir(context, original);
 
       if (bytes == null || !mounted) return;
 
@@ -53,47 +53,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
       debugPrint('Erro ao escolher imagem: $e');
     }
   }
-
-  Future<Uint8List?> _recortarImagem(String caminho) async {
-    final recortada = await ImageCropper().cropImage(
-      sourcePath: caminho,
-      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1), // quadrado
-      maxWidth: 800,
-      maxHeight: 800,
-      compressFormat: ImageCompressFormat.jpg,
-      compressQuality: 90,
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: '',
-          toolbarColor: const Color(0xFF0B141A),
-          toolbarWidgetColor: Colors.white,
-          backgroundColor: const Color(0xFF0B141A),
-          activeControlsWidgetColor: const Color(0xFF25D366),
-          cropFrameColor: Colors.white,
-          cropGridColor: Colors.white54,
-          showCropGrid: true,
-          hideBottomControls: false, // mantém o botão de girar
-          lockAspectRatio: true,
-          initAspectRatio: CropAspectRatioPreset.square,
-        ),
-        IOSUiSettings(
-          title: '',
-          doneButtonTitle: 'OK',
-          cancelButtonTitle: 'Cancelar',
-          aspectRatioLockEnabled: true,
-          resetAspectRatioEnabled: false,
-          aspectRatioPickerButtonHidden: true,
-        ),
-        WebUiSettings(context: context),
-      ],
-    );
-
-    if (recortada == null) return null; // usuário cancelou
-
-    // Funciona também na web (não depende de dart:io File).
-    return recortada.readAsBytes();
-  }
-
 
   void _mostrarMensagem(String mensagem) {
     ScaffoldMessenger.of(context).showSnackBar(
