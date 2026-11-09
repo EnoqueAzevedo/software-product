@@ -26,6 +26,9 @@ from routes.profissional import router as profissional_router
 
 from routes.agendamento import router as agendamento_router
 
+from routes.perfil import router as perfil_router
+
+
 # Executa a limpeza periodicamente
 async def tarefa_limpeza():
     while True:
@@ -93,6 +96,8 @@ app.include_router(servico_router)
 app.include_router(profissional_router)
 
 app.include_router(agendamento_router)
+
+app.include_router(perfil_router)
 
 
 # Rota principal
