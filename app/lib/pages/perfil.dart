@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'home_screen.dart';
 import 'meus_agendamentos.dart';
 import 'servico.dart';
 import 'recortar_foto_screen.dart';
+import '../services/api_service.dart';
 
 const double _larguraMaximaPerfil = 720;
 
@@ -29,13 +31,23 @@ class PerfilScreen extends StatefulWidget {
 
 class _PerfilScreenState extends State<PerfilScreen> {
   final _formKey = GlobalKey<FormState>();
-  // TODO: preencher com os dados do usuário vindos do FastAPI.
-  final _nomeController = TextEditingController(text: 'Enoque');
+  final _nomeController = TextEditingController();
   final _telefoneController  = TextEditingController();
+  
+  bool _carregando = true;
+  bool _salvando = false;
+  String? _imagemUrl;
 
   Uint8List? _fotoBytes;
   String? _genero;
   DateTime? _dataNascimento;
+
+
+  @override
+  void initState(){
+    super.initState();
+    _carregarDados();
+  }
 
   @override
   void dispose() {
@@ -44,7 +56,41 @@ class _PerfilScreenState extends State<PerfilScreen> {
     super.dispose();
   }
 
-  // ---------------------------------------------------------------- Foto
+  Future<void> _carregarDados() async {
+    try {
+      final usuarioJson = await ApiService.getMe();
+      final usuario = jsonDecode(usuarioJson) as Map<String, dynamic>;
+
+      final perfil = await ApiService.getPerfil();
+
+      if (!mounted) return;
+
+      setState(() {
+        _nomeController.text = usuario['nome'] ?? '';
+        _telefoneController.text = perfil['telefone'] ?? '';
+
+        final genero = perfil['genero'];
+
+        _genero = _opcoesGenero.contains(genero) ? genero : null;
+
+        final nascimento = perfil['data_nascimento'];
+
+        _dataNascimento = nascimento != null
+            ? DateTime.tryParse(nascimento)
+            : null;
+
+        _imagemUrl = perfil['imagem_url'];
+        _carregando = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() => _carregando = false);
+
+      _mostrarMensagem('Não foi possível carregar seus dados.');
+      debugPrint('Erro ao carregar perfil: $e');
+    }
+  }
 
   Future<void> _abrirCameraFlutuante() async {
     try {
@@ -127,7 +173,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   title: const Text('Remover foto'),
                   onTap: () {
                     Navigator.pop(sheetContext);
-                    setState(() => _fotoBytes = null);
+                    setState(() {
+                      _fotoBytes = null;
+                      _imagemUrl = null;
+                    });
                   },
                 ),
               ],
@@ -188,12 +237,46 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   // ------------------------------------------------------------- Ações
 
-  void _salvar() {
+  Future<void> _salvar() async {
+    if (_salvando) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    // TODO: enviar para o FastAPI: nome, telefone, gênero, data de nascimento
-    // e _fotoBytes (MultipartFile.fromBytes).
-    _mostrarMensagem('Dados atualizados.');
+    setState(() => _salvando = true);
+
+    try {
+      // 1) Se escolheu uma foto nova, envia primeiro e recebe a URL.
+      String? imagemUrl = _imagemUrl;
+
+      if (_fotoBytes != null) {
+        imagemUrl = await ApiService.enviarFotoPerfil(_fotoBytes!);
+      }
+
+      // 2) Salva os dados no perfil (foto removida => imagemUrl null).
+      final perfil = await ApiService.atualizarPerfil(
+        nome: _nomeController.text.trim(),
+        telefone: _telefoneController.text.trim(),
+        genero: _genero,
+        dataNascimento:
+            _dataNascimento?.toIso8601String().split('T').first,
+        imagemUrl: imagemUrl,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _imagemUrl = perfil['imagem_url'] as String? ?? imagemUrl;
+        _fotoBytes = null;
+      });
+
+      _mostrarMensagem('Dados atualizados.');
+    } catch (e) {
+      if (!mounted) return;
+
+      _mostrarMensagem('Não foi possível salvar. Tente novamente.');
+      debugPrint('Erro ao salvar perfil: $e');
+    } finally {
+      if (mounted) setState(() => _salvando = false);
+    }
   }
 
   void _mostrarMensagem(String mensagem) {
@@ -260,9 +343,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
               child: CircleAvatar(
                 radius: 60,
                 backgroundColor: AppColors.background,
-                backgroundImage:
-                    _fotoBytes != null ? MemoryImage(_fotoBytes!) : null,
-                child: _fotoBytes == null
+                backgroundImage: _fotoBytes != null
+                    ? MemoryImage(_fotoBytes!)
+                    : (_imagemUrl != null ? NetworkImage(_imagemUrl!) : null),
+                child: (_fotoBytes == null && _imagemUrl == null)
                     ? const Icon(
                         Icons.person,
                         size: 65,
@@ -329,183 +413,196 @@ class _PerfilScreenState extends State<PerfilScreen> {
           ),
         ),
         body: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: _larguraMaximaPerfil,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.md,
-                          AppSpacing.lg,
-                          AppSpacing.md,
-                          AppSpacing.lg,
-                        ),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _avatar(),
-                              const SizedBox(height: AppSpacing.xl),
+          child: _carregando
+              ? const Center(
+                  child: CircularProgressIndicator(),
+                )
+              : Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: _larguraMaximaPerfil,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.md,
+                              AppSpacing.lg,
+                              AppSpacing.md,
+                              AppSpacing.lg,
+                            ),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _avatar(),
+                                  const SizedBox(height: AppSpacing.xl),
 
-                              // Nome
-                              _rotulo('Nome'),
-                              TextFormField(
-                                controller: _nomeController,
-                                style: _estiloCampo,
-                                textCapitalization: TextCapitalization.words,
-                                textInputAction: TextInputAction.next,
-                                decoration: _decoracao(
-                                  hint: 'Seu nome',
-                                  icone: Icons.person_outline_rounded,
-                                ),
-                                validator: (valor) {
-                                  if (valor == null || valor.trim().isEmpty) {
-                                    return 'Informe seu nome.';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: AppSpacing.lg),
-
-                              // Telefone
-                              _rotulo('Telefone'),
-                              TextFormField(
-                                controller: _telefoneController,
-                                style: _estiloCampo,
-                                keyboardType: TextInputType.phone,
-                                textInputAction: TextInputAction.done,
-                                inputFormatters: [
-                                  _TelefoneInputFormatter(),
-                                ],
-                                decoration: _decoracao(
-                                  hint: '(11) 99999-9999',
-                                  icone: Icons.phone_outlined,
-                                ),
-                                validator: (valor) {
-                                  final telefone = valor?.replaceAll(RegExp(r'\D'), '') ?? '';
-
-                                  if (telefone.length != 10 && telefone.length != 11) {
-                                    return 'Informe um telefone válido.';
-                                  }
-
-                                  return null;
-                                },
-                              ),
-                              
-                              
-                              
-                              const SizedBox(height: AppSpacing.lg),
-
-                              // Gênero
-                              _rotulo('Gênero'),
-                              InputDecorator(
-                                decoration: _decoracao(),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: _genero,
-                                    isExpanded: true,
-                                    isDense: true,
-                                    hint: Text('Gênero', style: _estiloDica),
+                                  // Nome
+                                  _rotulo('Nome'),
+                                  TextFormField(
+                                    controller: _nomeController,
                                     style: _estiloCampo,
-                                    dropdownColor: AppColors.cardBackground,
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.small,
+                                    textCapitalization: TextCapitalization.words,
+                                    textInputAction: TextInputAction.next,
+                                    decoration: _decoracao(
+                                      hint: 'Seu nome',
+                                      icone: Icons.person_outline_rounded,
                                     ),
-                                    icon: const Icon(
-                                      Icons.keyboard_arrow_down_rounded,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                    items: _opcoesGenero
-                                        .map(
-                                          (g) => DropdownMenuItem<String>(
-                                            value: g,
-                                            child: Text(g),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: (valor) {
-                                      setState(() => _genero = valor);
+                                    validator: (valor) {
+                                      if (valor == null || valor.trim().isEmpty) {
+                                        return 'Informe seu nome.';
+                                      }
+                                      return null;
                                     },
                                   ),
-                                ),
-                              ),
-                              const SizedBox(height: AppSpacing.lg),
+                                  const SizedBox(height: AppSpacing.lg),
 
-                              // Data de nascimento
-                              _rotulo('Data de Nascimento'),
-                              InkWell(
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.small),
-                                onTap: _escolherData,
-                                child: InputDecorator(
-                                  decoration: _decoracao(),
-                                  child: Text(
-                                    dataTexto ?? 'DD/MM/AAAA',
-                                    style: dataTexto == null
-                                        ? _estiloDica
-                                        : _estiloCampo,
+                                  // Telefone
+                                  _rotulo('Telefone'),
+                                  TextFormField(
+                                    controller: _telefoneController,
+                                    style: _estiloCampo,
+                                    keyboardType: TextInputType.phone,
+                                    textInputAction: TextInputAction.done,
+                                    inputFormatters: [
+                                      _TelefoneInputFormatter(),
+                                    ],
+                                    decoration: _decoracao(
+                                      hint: '(11) 99999-9999',
+                                      icone: Icons.phone_outlined,
+                                    ),
+                                    validator: (valor) {
+                                      final telefone = valor?.replaceAll(RegExp(r'\D'), '') ?? '';
+
+                                      if (telefone.length != 10 && telefone.length != 11) {
+                                        return 'Informe um telefone válido.';
+                                      }
+
+                                      return null;
+                                    },
                                   ),
-                                ),
-                              ),
-                              const SizedBox(height: AppSpacing.xl),
+                                  
+                                  
+                                  
+                                  const SizedBox(height: AppSpacing.lg),
 
-                              // Atualizar
-                              SizedBox(
-                                width: double.infinity,
-                                height: 52,
-                                child: ElevatedButton(
-                                  onPressed: _salvar,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.accent,
-                                    foregroundColor: Colors.white,
-                                    textStyle: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
+                                  // Gênero
+                                  _rotulo('Gênero'),
+                                  InputDecorator(
+                                    decoration: _decoracao(),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<String>(
+                                        value: _genero,
+                                        isExpanded: true,
+                                        isDense: true,
+                                        hint: Text('Gênero', style: _estiloDica),
+                                        style: _estiloCampo,
+                                        dropdownColor: AppColors.cardBackground,
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.small,
+                                        ),
+                                        icon: const Icon(
+                                          Icons.keyboard_arrow_down_rounded,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        items: _opcoesGenero
+                                            .map(
+                                              (g) => DropdownMenuItem<String>(
+                                                value: g,
+                                                child: Text(g),
+                                              ),
+                                            )
+                                            .toList(),
+                                        onChanged: (valor) {
+                                          setState(() => _genero = valor);
+                                        },
+                                      ),
                                     ),
                                   ),
-                                  child: const Text('Atualizar'),
-                                ),
-                              ),
-                              const SizedBox(height: AppSpacing.md),
+                                  const SizedBox(height: AppSpacing.lg),
 
-                              // Cancelar
-                              SizedBox(
-                                width: double.infinity,
-                                height: 52,
-                                child: OutlinedButton(
-                                  onPressed: () => Navigator.maybePop(context),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.accentDark,
-                                    side: const BorderSide(
-                                      color: AppColors.beigeCard,
-                                    ),
-                                    shape: const StadiumBorder(),
-                                    textStyle: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
+                                  // Data de nascimento
+                                  _rotulo('Data de Nascimento'),
+                                  InkWell(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.small),
+                                    onTap: _escolherData,
+                                    child: InputDecorator(
+                                      decoration: _decoracao(),
+                                      child: Text(
+                                        dataTexto ?? 'DD/MM/AAAA',
+                                        style: dataTexto == null
+                                            ? _estiloDica
+                                            : _estiloCampo,
+                                      ),
                                     ),
                                   ),
-                                  child: const Text('Cancelar'),
-                                ),
+                                  const SizedBox(height: AppSpacing.xl),
+
+                                  // Atualizar
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 52,
+                                    child: ElevatedButton(
+                                      onPressed: _salvando ? null : _salvar,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.accent,
+                                        foregroundColor: Colors.white,
+                                        textStyle: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      child: _salvando
+                                          ? const SizedBox(
+                                              width: 22,
+                                              height: 22,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2.5,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : const Text('Atualizar'),
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.md),
+
+                                  // Cancelar
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 52,
+                                    child: OutlinedButton(
+                                      onPressed: () => Navigator.maybePop(context),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppColors.accentDark,
+                                        side: const BorderSide(
+                                          color: AppColors.beigeCard,
+                                        ),
+                                        shape: const StadiumBorder(),
+                                        textStyle: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      child: const Text('Cancelar'),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              const _BottomNavBar(),
-            ],
+                  const _BottomNavBar(),
+              ],
           ),
         ),
       ),

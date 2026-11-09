@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -263,5 +264,67 @@ class ApiService {
 
       throw Exception(mensagem);
     }
+  }
+
+  // Busca os dados pessoais do perfil
+  static Future<Map<String, dynamic>> getPerfil() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/perfil/'),
+      headers: await _cabecalhoAutenticado(),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Não foi possível buscar o perfil');
+    }
+
+    return jsonDecode(_decodificarResposta(response))
+        as Map<String, dynamic>;
+  }
+
+  // Atualiza os dados pessoais do perfil (incluindo o nome)
+  static Future<Map<String, dynamic>> atualizarPerfil({
+    String? nome,
+    String? telefone,
+    String? genero,
+    String? dataNascimento,
+    String? imagemUrl,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/perfil/'),
+      headers: {
+        ...await _cabecalhoAutenticado(),
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: jsonEncode({
+        'nome': nome,
+        'telefone': telefone,
+        'genero': genero,
+        'data_nascimento': dataNascimento,
+        'imagem_url': imagemUrl,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Não foi possível atualizar o perfil');
+    }
+
+    return jsonDecode(_decodificarResposta(response))
+        as Map<String, dynamic>;
+  }
+
+  // Envia a foto de perfil e devolve a URL pública salva no Storage
+  static Future<String> enviarFotoPerfil(Uint8List bytes) async {
+    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/perfil/foto'))
+      ..headers.addAll(await _cabecalhoAutenticado())
+      ..files.add(http.MultipartFile.fromBytes('foto', bytes, filename: 'avatar.jpg'));
+
+    final response = await http.Response.fromStream(await request.send());
+
+    if (response.statusCode != 200) {
+      throw Exception('Não foi possível enviar a foto');
+    }
+
+    final data = jsonDecode(_decodificarResposta(response)) as Map<String, dynamic>;
+    return data['imagem_url'] as String;
   }
 }
