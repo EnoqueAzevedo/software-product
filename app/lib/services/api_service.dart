@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http_parser/http_parser.dart';
 
 class ApiService {
   // URL pública do backend
@@ -314,14 +315,32 @@ class ApiService {
 
   // Envia a foto de perfil e devolve a URL pública salva no Storage
   static Future<String> enviarFotoPerfil(Uint8List bytes) async {
-    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/perfil/foto'))
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/perfil/foto'),
+    )
       ..headers.addAll(await _cabecalhoAutenticado())
-      ..files.add(http.MultipartFile.fromBytes('foto', bytes, filename: 'avatar.jpg'));
+      ..files.add(
+        http.MultipartFile.fromBytes(
+          'foto',
+          bytes,
+          filename: 'avatar.jpg',
+          contentType: MediaType('image', 'jpeg'),  // <-- AQUI
+        ),
+      );
 
     final response = await http.Response.fromStream(await request.send());
 
     if (response.statusCode != 200) {
-      throw Exception('Não foi possível enviar a foto');
+      // Melhora a mensagem de erro: mostra o detail que o backend devolveu
+      String mensagem = 'Não foi possível enviar a foto';
+      try {
+        final data = jsonDecode(_decodificarResposta(response));
+        if (data is Map && data['detail'] != null) {
+          mensagem = data['detail'].toString();
+        }
+      } catch (_) {}
+      throw Exception(mensagem);
     }
 
     final data = jsonDecode(_decodificarResposta(response)) as Map<String, dynamic>;
