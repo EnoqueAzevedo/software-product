@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'dart:convert';
 
 import 'package:camera/camera.dart';
@@ -268,7 +267,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
         _fotoBytes = null;
       });
 
-      _mostrarMensagem('Dados atualizados.');
+      await _mostrarTelaSucesso();
     } catch (e) {
       if (!mounted) return;
 
@@ -277,6 +276,61 @@ class _PerfilScreenState extends State<PerfilScreen> {
     } finally {
       if (mounted) setState(() => _salvando = false);
     }
+  }
+
+  Future<void> _mostrarTelaSucesso() async {
+    // Exibe o diálogo de sucesso
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Impede o usuário de fechar clicando fora
+      builder: (dialogContext) {
+        return PopScope(
+          canPop: false, // Impede o botão "voltar" de fechar o diálogo
+          child: Dialog(
+            backgroundColor: AppColors.background,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: AppColors.accent, // Cor do seu tema
+                    size: 80,
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Dados atualizados!',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    // Aguarda 2 segundos
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    // Fecha o diálogo
+    Navigator.of(context).pop();
+
+    // Redireciona para a Home limpando toda a pilha de navegação
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      (route) => false, 
+    );
   }
 
   void _mostrarMensagem(String mensagem) {

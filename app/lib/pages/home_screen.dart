@@ -19,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String nomeUsuario = 'Carregando...';
+  String? imagemUrl;
 
   List<dynamic> servicos = [];
   bool carregandoServicos = true;
@@ -32,16 +33,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Busca os dados do usuário autenticado
-  Future<void> _carregarUsuario() async {
+    Future<void> _carregarUsuario() async {
     try {
       final resposta = await ApiService.getMe();
-
       final dados = jsonDecode(resposta);
+
+      // Busca o perfil para pegar a imagem_url
+      String? urlImagem;
+      try {
+        final perfil = await ApiService.getPerfil();
+        urlImagem = perfil['imagem_url'];
+      } catch (e) {
+        // Se falhar a busca do perfil, ignora e segue sem a foto
+        print('Erro ao buscar imagem do perfil: $e');
+      }
 
       if (!mounted) return;
 
       setState(() {
         nomeUsuario = dados['nome'] ?? 'Usuário';
+        imagemUrl = urlImagem; // <-- SALVA A IMAGEM NO ESTADO
       });
     } catch (e) {
       if (!mounted) return;
@@ -106,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _HomeHeader(nomeUsuario: nomeUsuario),
+                            _HomeHeader(nomeUsuario: nomeUsuario, imagemUrl: imagemUrl),
                             const SizedBox(height: AppSpacing.md),
                             const _Tagline(),
                             const SizedBox(height: AppSpacing.md),
@@ -133,20 +144,24 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // Cabeçalho com usuário e notificações
+// Cabeçalho com usuário e notificações
 class _HomeHeader extends StatelessWidget {
-  const _HomeHeader({required this.nomeUsuario});
+  const _HomeHeader({required this.nomeUsuario, this.imagemUrl});
 
   final String nomeUsuario;
+  final String? imagemUrl;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const CircleAvatar(
+        CircleAvatar(
           radius: 24,
-          backgroundColor:
-              AppColors.beigeCard, // aparece se a imagem não carregar
-          backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=47'),
+          backgroundColor: AppColors.beigeCard,
+          // Se tiver imagemUrl, usa ela. Senão, usa a foto padrão.
+          backgroundImage: (imagemUrl != null && imagemUrl!.isNotEmpty)
+              ? NetworkImage(imagemUrl!) as ImageProvider
+              : const NetworkImage('https://i.pravatar.cc/150?img=47'),
         ),
         const SizedBox(width: AppSpacing.sm + 4),
         Expanded(
