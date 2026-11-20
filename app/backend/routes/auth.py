@@ -1,17 +1,31 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from crud.cadastro_provisorio import (
     create_cadastro_provisorio,
     confirmar_cadastro_provisorio,
+)
+from crud.recuperacao_senha import (
+    criar_token_recuperacao,
+    redefinir_senha,
 )
 from db.session import get_db
 from schemas.cadastro_provisorio import (
     CadastroProvisorioCreate,
     CadastroProvisorioResponse,
 )
+from schemas.recuperacao_senha import (
+    SolicitarRecuperacao,
+    RedefinirSenha,
+)
 from services.email_service import enviar_email
+from models.user import User
+from models.recuperacao_senha import RecuperacaoSenha
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/auth",
@@ -135,3 +149,76 @@ async def confirm(
         """,
         status_code=200,
     )
+
+@router.post("/forgot-password")
+async def forgot_password(
+    dados: SolicitarRecuperacao,
+    db: AsyncSession = Depends(get_db)
+):
+    resultado = await db.execute(
+        select(User).where(
+            func.lower(User.email) == dados.email.lower()
+        )
+    )
+
+    usuario = resultado.scalar_one_or_none()
+
+    if usuario:
+        try:
+            token = await criar_token_recuperacao(db, usuario.id)
+
+            link = (
+                "https://agenda-pulcro.onrender.com/"
+                f"recuperar-senha?token={token}"
+            )
+
+            mensagem = (
+                "Você solicitou a recuperação da sua senha.\n\n"
+                "Acesse o link abaixo para cadastrar uma nova senha:\n"
+                f"{link}\n\n"
+                "Este link expira em 30 minutos."
+            )
+
+            await enviar_email(
+                destinatario=usuario.email,
+                assunto="Recuperação de senha - Agenda Pulcro",
+                mensagem=mensagem
+            )
+
+            await db.commit()
+
+        except Exception:
+            await db.rollback()
+            logger.exception("Erro ao enviar e-mail de recuperação.")
+
+    return {
+        "mensagem": (
+            "Se existir uma conta associada a esse e-mail, "
+            "você receberá as instruções de recuperação."
+        )
+    }
+
+
+@router.post("/reset-password")
+async def reset_password(
+    dados: RedefinirSenha,
+    db: AsyncSession = Depends(get_db)
+):
+    sucesso = await redefinir_senha(
+        db,
+        dados.token,
+        dados.nova_senha
+    )
+
+    if not sucesso:
+        await db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Link inválido ou expirado."
+        )
+
+    await db.commit()
+
+    return {
+        "mensagem": "Senha redefinida com sucesso."
+    }

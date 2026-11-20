@@ -1,3 +1,4 @@
+
 import os
 
 import httpx
@@ -5,56 +6,49 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL")
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+BREVO_FROM_EMAIL = os.getenv("BREVO_FROM_EMAIL")
+BREVO_FROM_NAME = os.getenv(
+    "BREVO_FROM_NAME",
+    "Agenda Pulcro"
+)
 
-
-# Confere se as configurações do SendGrid existem
-if not SENDGRID_API_KEY:
+if not BREVO_API_KEY:
     raise ValueError(
-        "SENDGRID_API_KEY não encontrada no .env"
+        "BREVO_API_KEY não encontrada no .env"
     )
 
-if not SENDGRID_FROM_EMAIL:
+if not BREVO_FROM_EMAIL:
     raise ValueError(
-        "SENDGRID_FROM_EMAIL não encontrada no .env"
+        "BREVO_FROM_EMAIL não encontrada no .env"
     )
 
 
-# Envia e-mail usando a API HTTPS do SendGrid
 async def enviar_email(
     destinatario: str,
     assunto: str,
     mensagem: str,
 ):
-    url = "https://api.sendgrid.com/v3/mail/send"
+    url = "https://api.brevo.com/v3/smtp/email"
 
     headers = {
-        "Authorization": f"Bearer {SENDGRID_API_KEY}",
+        "api-key": BREVO_API_KEY,
         "Content-Type": "application/json",
+        "Accept": "application/json",
     }
 
     payload = {
-        "personalizations": [
-            {
-                "to": [
-                    {
-                        "email": destinatario,
-                    }
-                ]
-            }
-        ],
-        "from": {
-            "email": SENDGRID_FROM_EMAIL,
-            "name": "Agenda Pulcro",
+        "sender": {
+            "name": BREVO_FROM_NAME,
+            "email": BREVO_FROM_EMAIL,
         },
-        "subject": assunto,
-        "content": [
+        "to": [
             {
-                "type": "text/plain",
-                "value": mensagem,
+                "email": destinatario,
             }
         ],
+        "subject": assunto,
+        "textContent": mensagem,
     }
 
     async with httpx.AsyncClient(timeout=20.0) as client:
@@ -64,9 +58,8 @@ async def enviar_email(
             json=payload,
         )
 
-    # SendGrid retorna 202 quando o e-mail foi aceito
-    if response.status_code != 202:
+    if response.status_code != 201:
         raise RuntimeError(
-            f"Erro ao enviar e-mail pelo SendGrid: "
+            f"Erro ao enviar e-mail pelo Brevo: "
             f"{response.status_code} - {response.text}"
         )

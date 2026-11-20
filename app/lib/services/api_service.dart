@@ -62,6 +62,73 @@ class ApiService {
     return data['mensagem'];
   }
 
+  // Solicita recuperação de senha
+  static Future<String> solicitarRecuperacao({
+    required String email,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/forgot-password'),
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: jsonEncode({
+        'email': email.trim(),
+      }),
+    );
+
+    final resposta = _decodificarResposta(response);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Não foi possível solicitar a recuperação.');
+    }
+
+    final data = jsonDecode(resposta);
+
+    return data['mensagem'] as String;
+  }
+
+  // Redefine a senha usando o token recebido por e-mail
+  static Future<String> redefinirSenha({
+    required String token,
+    required String novaSenha,
+    required String confirmarSenha,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/reset-password'),
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: jsonEncode({
+        'token': token,
+        'nova_senha': novaSenha,
+        'confirmar_senha': confirmarSenha,
+      }),
+    );
+
+    final resposta = _decodificarResposta(response);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      String mensagem = 'Não foi possível redefinir a senha.';
+
+      try {
+        final data = jsonDecode(resposta);
+
+        if (data is Map && data['detail'] != null) {
+          mensagem = data['detail'].toString();
+        }
+      } catch (_) {}
+
+      throw Exception(mensagem);
+    }
+
+    final data = jsonDecode(resposta);
+
+    return data['mensagem'] as String;
+  }
+
+
+
+
   // Faz login e salva o token de autenticação
   static Future<String> login({
     required String email,

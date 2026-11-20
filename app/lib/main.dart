@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'pages/alterar_senha_screen.dart';
 import 'pages/login_page.dart';
 import 'theme/app_theme.dart';
 import 'services/api_service.dart';
@@ -35,6 +36,21 @@ Future<void> testarServicos() async {
   }
 }
 
+// Identifica se o aplicativo foi aberto pelo link de recuperação.
+Widget _telaInicial() {
+  final uri = Uri.base;
+
+  if (uri.path == '/recuperar-senha') {
+    final token = uri.queryParameters['token'] ?? '';
+
+    return AlterarSenhaScreen(token: token);
+  }
+
+  return const LoginScreen();
+}
+
+
+
 // Aplicativo principal
 class AgendaPulcroApp extends StatelessWidget {
   const AgendaPulcroApp({super.key});
@@ -46,7 +62,7 @@ class AgendaPulcroApp extends StatelessWidget {
       title: 'Agenda Pulcro',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const LoginScreen(),   
+      home: _telaInicial(),   
       locale: const Locale('pt', 'BR'),
       supportedLocales: const [Locale('pt', 'BR')],
       localizationsDelegates: const [
