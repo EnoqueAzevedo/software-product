@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
+import 'login_page.dart';
 
 class AlterarSenhaScreen extends StatefulWidget {
   /// Token recebido por e-mail (opcional), enviado ao backend ao alterar.
@@ -65,13 +66,17 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
 
         if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(mensagem)),
-        );
+        // Mostra o dialog de sucesso
+        await _mostrarDialogSucesso(mensagem);
 
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        // Depois de fechar o dialog, volta para a home
+        if (!mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+        
       } else {
-        // A alteração autenticada será conectada separadamente.
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Alteração de senha ainda não configurada.'),
@@ -93,6 +98,52 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
         setState(() => _carregando = false);
       }
     }
+  }
+
+  Future<void> _mostrarDialogSucesso(String mensagem) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          icon: const Icon(
+            Icons.lock_reset,
+            size: 52,
+            color: AppColors.accent,
+          ),
+          title: const Text(
+            'Senha alterada',
+            textAlign: TextAlign.center,
+          ),
+          content: Text(
+            mensagem.isNotEmpty
+                ? mensagem
+                : 'Sua senha foi alterada com sucesso.',
+            textAlign: TextAlign.center,
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: AppColors.textOnDark,
+                minimumSize: const Size(140, 45),
+              ),
+              child: const Text('Entendi'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _rotulo(TextTheme textTheme, String texto) => Padding(
@@ -158,7 +209,7 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
                     child: Image.asset(
                       'assets/images/logo.png',
                       height: 160,
-                      errorBuilder: (_, __, ___) => const Icon(
+                      errorBuilder: (_, _, _) => const Icon(
                         Icons.face_retouching_natural,
                         size: 120,
                         color: AppColors.accentDark,

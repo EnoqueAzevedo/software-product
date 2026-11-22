@@ -30,21 +30,66 @@ class _EsqueceuSenhaScreenState extends State<EsqueceuSenhaScreen> {
   }
 
   
+  
   Future<void> _enviar() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _carregando = true);
 
     try {
-      final mensagem = await ApiService.solicitarRecuperacao(
+      await ApiService.solicitarRecuperacao(
         email: _emailController.text.trim(),
       );
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mensagem)),
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            icon: const Icon(
+              Icons.mark_email_read_outlined,
+              size: 52,
+              color: AppColors.accent,
+            ),
+            title: const Text(
+              'Verifique seu e-mail!',
+              textAlign: TextAlign.center,
+            ),
+            content: const Text(
+              'Se existir uma conta associada ao endereço informado, '
+              'você receberá as instruções para redefinir sua senha.\n\n'
+              'Abra sua caixa de entrada e procure o e-mail do Agenda Pulcro. '
+              'Caso não encontre, verifique também a pasta de spam.\n\n'
+              'O link de recuperação expira em 30 minutos e só pode ser '
+              'utilizado uma vez.',
+              textAlign: TextAlign.center,
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: AppColors.textOnDark,
+                  minimumSize: const Size(140, 45),
+                ),
+                child: const Text('Entendi'),
+              ),
+            ],
+          );
+        },
       );
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
 
@@ -90,7 +135,7 @@ class _EsqueceuSenhaScreenState extends State<EsqueceuSenhaScreen> {
                     child: Image.asset(
                       'assets/images/logo.png',
                       height: 160,
-                      errorBuilder: (_, __, ___) => const Icon(
+                      errorBuilder: (_, _, _) => const Icon(
                         Icons.face_retouching_natural,
                         size: 120,
                         color: AppColors.accentDark,

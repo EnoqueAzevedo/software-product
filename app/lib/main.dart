@@ -14,25 +14,21 @@ void main() {
   runApp(const AgendaPulcroApp());
 }
 
-// Testa a comunicação com o backend
 Future<void> testarApi() async {
   try {
     final resposta = await ApiService.testarConexao();
-
-    print('RESPOSTA DA API: $resposta');
+    debugPrint('RESPOSTA DA API: $resposta');        
   } catch (e) {
-    print('ERRO AO CONECTAR COM A API: $e');
+    debugPrint('ERRO AO CONECTAR COM A API: $e');   
   }
 }
 
-// Testa a busca dos serviços
 Future<void> testarServicos() async {
   try {
     final servicos = await ApiService.getServicos();
-
-    print('SERVIÇOS DA API: $servicos');
+    debugPrint('SERVIÇOS DA API: $servicos');       
   } catch (e) {
-    print('ERRO AO BUSCAR SERVIÇOS: $e');
+    debugPrint('ERRO AO BUSCAR SERVIÇOS: $e');      
   }
 }
 
