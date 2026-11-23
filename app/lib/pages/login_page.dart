@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _keepConnected = true;
 
-  // Faz login e abre a Home
+    // Faz login e abre a Home
   Future<void> _login() async {
     try {
       // Faz login na API
@@ -34,8 +34,8 @@ class _LoginScreenState extends State<LoginScreen> {
       // Verifica se a tela ainda está disponível
       if (!mounted) return;
 
-      // Mostra os dados recebidos no terminal
-      print('USUÁRIO AUTENTICADO: $usuario');
+      // Mostra os dados recebidos no terminal (Corrigido para debugPrint)
+      debugPrint('USUÁRIO AUTENTICADO: $usuario');
 
       // Abre a Home e remove o login da navegação
       Navigator.of(context).pushReplacement(
@@ -44,21 +44,58 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     } catch (e) {
-      // Mostra o erro no terminal
-      print('ERRO NO LOGIN: $e');
+      // Mostra o erro no terminal (Corrigido para debugPrint)
+      debugPrint('ERRO NO LOGIN: $e');
 
       // Verifica se a tela ainda está disponível
       if (!mounted) return;
 
-      // Mostra o erro para o usuário
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Não foi possível entrar. Verifique seus dados.',
-          ),
-        ),
-      );
+      //Mostra o Dialog de Erro para o usuário
+      await _mostrarDialogErro();
     }
+  }
+
+  
+  Future<void> _mostrarDialogErro() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true, // Pode fechar clicando fora
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          icon: const Icon(
+            Icons.lock_outline, // Ícone de cadeado
+            size: 52,
+            color: Colors.redAccent, // Cor de erro
+          ),
+          title: const Text(
+            'Senha incorreta',
+            textAlign: TextAlign.center,
+          ),
+          content: const Text(
+            'O e-mail ou a senha informados não conferem. Verifique seus dados e tente novamente.',
+            textAlign: TextAlign.center,
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accentDark,
+                foregroundColor: AppColors.textOnDark,
+                minimumSize: const Size(140, 45),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(26),
+                ),
+              ),
+              child: const Text('Entendi'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
